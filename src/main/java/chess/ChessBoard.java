@@ -1,6 +1,7 @@
 package chess;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 // This class is used to keep track of the state of the board,
@@ -8,7 +9,8 @@ import java.util.List;
 // Importing and exporting FEN strings
 public class ChessBoard {
     ChessBoard() {
-        chessBoard = new HashMap<>();
+        chessBoard = new ChessPiece[8][8];
+        chessBoardList = new LinkedList<>();
     }
 
     // Load the position from the FEN string
@@ -17,17 +19,26 @@ public class ChessBoard {
     }
 
     // Converts the position to FEN string
-    @Override
-    public String toString() {
+    public String toFEN() {
         return "";
     }
 
     public ChessPiece getPiece(Pos pos) {
-        return chessBoard.getOrDefault(pos, null);
+        return chessBoard[pos.y()][pos.x()];
+    }
+
+    public boolean isUnderAttack(Pos pos, ChessPiece.Color color) {
+        return color.equals(ChessPiece.Color.WHITE) ?
+            WKingSt.attackedSquares[pos.x()][pos.y()] :
+            BKingSt.attackedSquares[pos.x()][pos.y()];
     }
 
     // This variables describe board state, everything, that can be deduced from reading FEN string
-    private HashMap<Pos, ChessPiece> chessBoard;
+    // Two different representations of a board
+    // Array is used to acces pieces by position,
+    // List is used to iterate through all of the pieces
+    private ChessPiece[][] chessBoard;
+    private List<ChessPiece> chessBoardList;
     // It is an array of 4 elements, it stores data on which side can castle,
     // Data is stored in this order: WShort, WLong, BShort, BLong
     // Does not account for temporary castling restrinctions, i.e. checks or blocks

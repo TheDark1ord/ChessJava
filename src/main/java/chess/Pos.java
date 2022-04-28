@@ -6,16 +6,20 @@ public class Pos {
     private final int x;
     private final int y;
 
+    // Expects an unsigned integer
     Pos(int x, int y) {
+        if (x < 0 || y < 0)
+            throw new IllegalArgumentException();
+
         this.x = x;
         this.y = y;
     }
 
-    public int getX() {
+    public int x() {
         return x;
     }
 
-    public int getY() {
+    public int y() {
         return y;
     }
 
