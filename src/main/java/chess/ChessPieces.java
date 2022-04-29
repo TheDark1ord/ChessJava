@@ -1,8 +1,7 @@
 package chess;
 
+import java.util.LinkedList;
 import java.util.List;
-
-import javax.swing.colorchooser.ColorSelectionModel;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -16,6 +15,8 @@ abstract class ChessPiece {
     protected final Color color;
     protected Pos pos;
     protected ChessBoard parentBoard;
+    // Friendly pieces, that this piece ca reach
+    public List<Pos> protectedPieces;
     public List<Pos> possibleMoves;
 
     ChessPiece(Pos pos, Color color, ChessBoard parentBoard) {
@@ -53,6 +54,7 @@ abstract class ChessPiece {
     }
 
     // Get every move, that is avalible to that piece
+    // also includes squares with protected pieces
     // does not account for pinned pieces
     // moves are returned as a boolean matrix, where true means that that piece
     // can move to that particular square
@@ -61,12 +63,24 @@ abstract class ChessPiece {
     // if it is mate, or simply to determine whe the king can move
     //
     // Requires to generatePossibleMoves to have been called
-    abstract boolean[][] getMoveMap();
+    public boolean[][] getMoveMap() {
+        boolean[][] ret_arr = new boolean[8][8];
+
+        for (Pos move : possibleMoves) {
+            ret_arr[move.y()][move.x()] = true;
+        }
+        for (Pos move : protectedPieces) {
+            ret_arr[move.y()][move.x()] = true;
+        }
+
+        return ret_arr;
+    }
 
     // Generates all the possible moves the piece can make with current
     // board position and lists them in the possibleMoves list
+    // also lists protected pieces
     // does not account for the pinned pieces and checks
-    abstract void generatePossibleMoves();
+    abstract public void generatePossibleMoves();
 
     public enum Name {
         W_KING, W_QUEEN,
@@ -109,7 +123,7 @@ abstract class ChessPiece {
     // Returns 1 if square is occupied by a friendly piece
     // Returns 0 if square is not occupied
     // Returns -1 if is occupied by an enemy piece
-    private int isOccupied(Pos squarePos) {
+    protected int isOccupied(Pos squarePos) {
         ChessPiece piece = parentBoard.getPiece(squarePos);
         if (piece == null)
             return 0;
@@ -122,14 +136,46 @@ class King extends ChessPiece {
         super(pos, color, parentBoard);
     }
 
-    @Override
-    boolean[][] getMoveMap() {
-        return new boolean[8][8];
+    private void checkSquare(int p1, int p2) {
+        Pos to_check = new Pos(p1, p2);
+        if (!parentBoard.isUnderAttack(to_check, color)) {
+            if (isOccupied(to_check) == 1) {
+                protectedPieces.add(to_check);
+            } else {
+                possibleMoves.add(pos);
+            }
+        }
     }
 
     @Override
-    void generatePossibleMoves() {
+    public void generatePossibleMoves() {
+        possibleMoves = new LinkedList<>();
 
+        // Account for a king standing in a leftmost ar a rightmost position
+        int leftBound = Math.max(0, pos.x() - 1);
+        int rightBound = Math.min(pos.x() + 1, 7);
+
+        // Check upper row
+        if (pos.y() != 7) {
+            for (int i = leftBound; i <= rightBound; i++) {
+                checkSquare(i, pos.y() + 1);
+            }
+        }
+
+        // Check middle row
+        if (leftBound != pos.x()) {
+            checkSquare(leftBound, pos.y());
+        }
+        if (rightBound != pos.x()) {
+            checkSquare(rightBound, pos.y());
+        }
+
+        // Check bottom row
+        if (pos.y() != 0) {
+            for (int i = leftBound; i <= rightBound; i++) {
+                checkSquare(i, pos.y() - 1);
+            }
+        }
     }
 
     @Override
@@ -143,14 +189,68 @@ class Queen extends ChessPiece {
         super(pos, color, parentBoard);
     }
 
-    @Override
-    boolean[][] getMoveMap() {
-        return new boolean[8][8];
+    private boolean checkSquare(int p1, int p2) {
+        Pos to_check = new Pos(p1, p2);
+        int ocup = isOccupied(to_check);
+        switch (ocup) {
+            case (0):
+                possibleMoves.add(to_check);
+                break;
+            case (1):
+                protectedPieces.add(to_check);
+                return true;
+            case (-1):
+                possibleMoves.add(to_check);
+                return true;
+        }
+        return false;
     }
 
     @Override
-    void generatePossibleMoves() {
-        
+    public void generatePossibleMoves() {
+        // Check straight lines
+        for (int i = pos.x() + 1; i < 8; i++) {
+            if (checkSquare(i, pos.y())) {
+                break;
+            }
+        }
+        for (int i = pos.x() - 1; i >= 0; i--) {
+            if (checkSquare(i, pos.y())) {
+                break;
+            }
+        }
+        for (int i = pos.y() + 1; i < 8; i++) {
+            if (checkSquare(pos.x(), i)) {
+                break;
+            }
+        }
+        for (int i = pos.y() - 1; i >= 0; i--) {
+            if (checkSquare(pos.x(), i)) {
+                break;
+            }
+        }
+
+        // Check diagonals
+        for (int i = pos.y() + 1, j = pos.x() + 1; i < 8 && j < 8; i++, j++) {
+            if (checkSquare(i, j)) {
+                break;
+            }
+        }
+        for (int i = pos.y() - 1, j = pos.x() + 1; i >= 0 && j < 8; i--, j++) {
+            if (checkSquare(i, j)) {
+                break;
+            }
+        }
+        for (int i = pos.y() + 1, j = pos.x() - 1; i < 8 && j >= 0; i++, j--) {
+            if (checkSquare(i, j)) {
+                break;
+            }
+        }
+        for (int i = pos.y() - 1, j = pos.x() - 1; i >= 0 && j >= 0; i--, j--) {
+            if (checkSquare(i, j)) {
+                break;
+            }
+        }
     }
 
     @Override
@@ -164,14 +264,45 @@ class Rook extends ChessPiece {
         super(pos, color, parentBoard);
     }
 
-    @Override
-    boolean[][] getMoveMap() {
-        return new boolean[8][8];
+    private boolean checkSquare(int p1, int p2) {
+        Pos to_check = new Pos(p1, p2);
+        int ocup = isOccupied(to_check);
+        switch (ocup) {
+            case (0):
+                possibleMoves.add(to_check);
+                break;
+            case (1):
+                protectedPieces.add(to_check);
+                return true;
+            case (-1):
+                possibleMoves.add(to_check);
+                return true;
+        }
+        return false;
     }
 
     @Override
-    void generatePossibleMoves() {
-
+    public void generatePossibleMoves() {
+        for (int i = pos.x() + 1; i < 8; i++) {
+            if (checkSquare(i, pos.y())) {
+                break;
+            }
+        }
+        for (int i = pos.x() - 1; i >= 0; i--) {
+            if (checkSquare(i, pos.y())) {
+                break;
+            }
+        }
+        for (int i = pos.y() + 1; i < 8; i++) {
+            if (checkSquare(pos.x(), i)) {
+                break;
+            }
+        }
+        for (int i = pos.y() - 1; i >= 0; i--) {
+            if (checkSquare(pos.x(), i)) {
+                break;
+            }
+        }
     }
 
     @Override
@@ -185,14 +316,45 @@ class Bishop extends ChessPiece {
         super(pos, color, parentBoard);
     }
 
-    @Override
-    boolean[][] getMoveMap() {
-        return new boolean[8][8];
+    private boolean checkSquare(int p1, int p2) {
+        Pos to_check = new Pos(p1, p2);
+        int ocup = isOccupied(to_check);
+        switch (ocup) {
+            case (0):
+                possibleMoves.add(to_check);
+                break;
+            case (1):
+                protectedPieces.add(to_check);
+                return true;
+            case (-1):
+                possibleMoves.add(to_check);
+                return true;
+        }
+        return false;
     }
 
     @Override
-    void generatePossibleMoves() {
-
+    public void generatePossibleMoves() {
+        for (int i = pos.y() + 1, j = pos.x() + 1; i < 8 && j < 8; i++, j++) {
+            if (checkSquare(i, j)) {
+                break;
+            }
+        }
+        for (int i = pos.y() - 1, j = pos.x() + 1; i >= 0 && j < 8; i--, j++) {
+            if (checkSquare(i, j)) {
+                break;
+            }
+        }
+        for (int i = pos.y() + 1, j = pos.x() - 1; i < 8 && j >= 0; i++, j--) {
+            if (checkSquare(i, j)) {
+                break;
+            }
+        }
+        for (int i = pos.y() - 1, j = pos.x() - 1; i >= 0 && j >= 0; i--, j--) {
+            if (checkSquare(i, j)) {
+                break;
+            }
+        }
     }
 
     @Override
@@ -206,14 +368,22 @@ class Knight extends ChessPiece {
         super(pos, color, parentBoard);
     }
 
-    @Override
-    boolean[][] getMoveMap() {
-        return new boolean[8][8];
-    }
+    // Possible moves for a knight
+    private int X[] = { 2, 1, -1, -2, -2, -1, 1, 2 };
+    private int Y[] = { 1, 2, 2, 1, -1, -2, -2, -1 };
 
     @Override
-    void generatePossibleMoves() {
-
+    public void generatePossibleMoves() {
+        for (int i = 0; i < 8; i++) {
+            Pos to_check = new Pos(pos.x() + X[i], pos.y() + Y[i]);
+            if (to_check.x() > 0 && to_check.x() < 8 && to_check.y() > 0 && to_check.y() < 8) {
+                if (isOccupied(pos) == 1) {
+                    protectedPieces.add(to_check);
+                } else {
+                    possibleMoves.add(to_check);
+                }
+            }
+        }
     }
 
     @Override
@@ -228,13 +398,47 @@ class Pawn extends ChessPiece {
     }
 
     @Override
-    boolean[][] getMoveMap() {
-        return new boolean[8][8];
-    }
+    public void generatePossibleMoves() {
+        int startingRow = color.equals(Color.WHITE) ? 2 : 6;
+        // If the pawn is white forward move will increase pos.y()
+        // If the pawn is black forward move will decrease pos.y()
+        int forMov = color.equals(Color.WHITE) ? 1 : -1;
 
-    @Override
-    void generatePossibleMoves() {
+        // Forward move
+        if (isOccupied(new Pos(pos.x(), pos.y() + forMov)) == 0) {
+            possibleMoves.add(new Pos(pos.x(), pos.y() + forMov));
 
+            // Pawn can make a double move
+            if (pos.y() == startingRow && isOccupied(new Pos(pos.x(), pos.y() + forMov * 2)) == 0) {
+                possibleMoves.add(new Pos(pos.x(), pos.y() + forMov * 2));
+            }
+        }
+
+        // Capture
+        if (pos.x() > 0) {
+            if (isOccupied((new Pos(pos.x() - 1, pos.y() + forMov))) == -1) {
+                possibleMoves.add(new Pos(pos.x() - 1, pos.y() + forMov));
+            }
+        }
+        if (pos.x() < 7) {
+            if (isOccupied((new Pos(pos.x() + 1, pos.y() + forMov))) == -1) {
+                possibleMoves.add(new Pos(pos.x() + 1, pos.y() + forMov));
+            }
+        }
+
+        // French move
+        if (parentBoard.enPassant() != null) {
+            if (pos.x() > 0) {
+                if (parentBoard.enPassant().equals(new Pos(pos.x() - 1, pos.y() + forMov))) {
+                    possibleMoves.add(new Pos(pos.x() - 1, pos.y() + forMov));
+                }
+            }
+            if (pos.x() < 7) {
+                if (parentBoard.enPassant().equals(new Pos(pos.x() + 1, pos.y() + forMov))) {
+                    possibleMoves.add(new Pos(pos.x() + 1, pos.y() + forMov));
+                }
+            }
+        }
     }
 
     @Override

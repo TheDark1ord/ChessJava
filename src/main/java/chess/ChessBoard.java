@@ -1,6 +1,7 @@
 package chess;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -33,11 +34,17 @@ public class ChessBoard {
             BKingSt.attackedSquares[pos.x()][pos.y()];
     }
 
+    public boolean isInCheck(ChessPiece.Color color) {
+        return color.equals(ChessPiece.Color.WHITE) ?
+            !WKingSt.checkState.equals(KingStatus.CheckState.NONE) :
+            !BKingSt.checkState.equals(KingStatus.CheckState.NONE);
+    }
+
     // This variables describe board state, everything, that can be deduced from reading FEN string
     // Two different representations of a board
     // Array is used to acces pieces by position,
     // List is used to iterate through all of the pieces
-    private ChessPiece[][] chessBoard;
+    public  ChessPiece[][] chessBoard;
     private List<ChessPiece> chessBoardList;
     // It is an array of 4 elements, it stores data on which side can castle,
     // Data is stored in this order: WShort, WLong, BShort, BLong
@@ -53,6 +60,26 @@ public class ChessBoard {
     // If a pawn can attack the square, stored in this variable, then it is able
     // to make the french move
     private Pos enPassant;
+
+    public Iterator<ChessPiece> getIterator() {
+        return chessBoardList.iterator();
+    }
+
+    public boolean[] castling() {
+        return castling;
+    }
+
+    public boolean whiteToMove() {
+        return whiteToMove;
+    }
+
+    public int fullMoveClock() {
+        return fullMoveClock;
+    }
+
+    public Pos enPassant() {
+        return enPassant;
+    }
 
     // It is all about checks and pins
     private static class KingStatus {
