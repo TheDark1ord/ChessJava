@@ -6,17 +6,15 @@ import java.util.List;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-abstract class ChessPiece {
-    public static enum Color {
-        WHITE,
-        BLACK
-    };
+enum Color {
+    WHITE,
+    BLACK
+}
 
+abstract class ChessPiece {
     protected final Color color;
     protected Pos pos;
     protected ChessBoard parentBoard;
-    // Friendly pieces, that this piece ca reach
-    public List<Pos> protectedPieces;
     public List<Pos> possibleMoves;
 
     ChessPiece(Pos pos, Color color, ChessBoard parentBoard) {
@@ -53,29 +51,6 @@ abstract class ChessPiece {
         return parentBoard.getPiece(new_pos) == null ? 1 : -1;
     }
 
-    // Get every move, that is avalible to that piece
-    // also includes squares with protected pieces
-    // does not account for pinned pieces
-    // moves are returned as a boolean matrix, where true means that that piece
-    // can move to that particular square
-    //
-    // that mathod can be useful if you want, for example, if a king is under check,
-    // if it is mate, or simply to determine whe the king can move
-    //
-    // Requires to generatePossibleMoves to have been called
-    public boolean[][] getMoveMap() {
-        boolean[][] ret_arr = new boolean[8][8];
-
-        for (Pos move : possibleMoves) {
-            ret_arr[move.y()][move.x()] = true;
-        }
-        for (Pos move : protectedPieces) {
-            ret_arr[move.y()][move.x()] = true;
-        }
-
-        return ret_arr;
-    }
-
     // Generates all the possible moves the piece can make with current
     // board position and lists them in the possibleMoves list
     // also lists protected pieces
@@ -93,6 +68,19 @@ abstract class ChessPiece {
     };
 
     abstract public Name getName();
+
+    // Checks parent board and
+    // Returns 1 if square is occupied by a friendly piece
+    // Returns 0 if square is not occupied
+    // Returns -1 if is occupied by an enemy piece
+    protected int isOccupied(Pos squarePos) {
+        ChessPiece piece = parentBoard.getPiece(squarePos);
+        if (piece == null)
+            return 0;
+        return piece.color == this.color ? 1 : -1;
+    }
+
+    // TODO: add check diagonal and check line methods
 
     @Override
     public int hashCode() {
@@ -118,17 +106,6 @@ abstract class ChessPiece {
                 .append(this.getName(), o.getName())
                 .isEquals();
     }
-
-    // Checks parent board and
-    // Returns 1 if square is occupied by a friendly piece
-    // Returns 0 if square is not occupied
-    // Returns -1 if is occupied by an enemy piece
-    protected int isOccupied(Pos squarePos) {
-        ChessPiece piece = parentBoard.getPiece(squarePos);
-        if (piece == null)
-            return 0;
-        return piece.color.equals(this.color) ? 1 : -1;
-    }
 }
 
 class King extends ChessPiece {
@@ -136,18 +113,8 @@ class King extends ChessPiece {
         super(pos, color, parentBoard);
     }
 
-    private void checkSquare(int p1, int p2) {
-        Pos to_check = new Pos(p1, p2);
-        if (!parentBoard.isUnderAttack(to_check, color)) {
-            if (isOccupied(to_check) == 1) {
-                protectedPieces.add(to_check);
-            } else {
-                possibleMoves.add(pos);
-            }
-        }
-    }
-
     @Override
+    // Does not account for squares under attack
     public void generatePossibleMoves() {
         possibleMoves = new LinkedList<>();
 
@@ -158,29 +125,41 @@ class King extends ChessPiece {
         // Check upper row
         if (pos.y() != 7) {
             for (int i = leftBound; i <= rightBound; i++) {
-                checkSquare(i, pos.y() + 1);
+                Pos to_check = new Pos(i, pos.y());
+                if (isOccupied(to_check) != 1) {
+                    possibleMoves.add(to_check);
+                }
             }
         }
 
         // Check middle row
         if (leftBound != pos.x()) {
-            checkSquare(leftBound, pos.y());
+            Pos to_check = new Pos(pos.x() - 1, pos.y());
+            if (isOccupied(to_check) != 1) {
+                possibleMoves.add(to_check);
+            }
         }
         if (rightBound != pos.x()) {
-            checkSquare(rightBound, pos.y());
+            Pos to_check = new Pos(pos.x() + 1, pos.y());
+            if (isOccupied(to_check) != 1) {
+                possibleMoves.add(to_check);
+            }
         }
 
         // Check bottom row
         if (pos.y() != 0) {
             for (int i = leftBound; i <= rightBound; i++) {
-                checkSquare(i, pos.y() - 1);
+                Pos to_check = new Pos(i, pos.y());
+                if (isOccupied(to_check) != 1) {
+                    possibleMoves.add(to_check);
+                }
             }
         }
     }
 
     @Override
     public Name getName() {
-        return color.equals(Color.WHITE) ? Name.W_KING : Name.B_KING;
+        return color == Color.WHITE ? Name.W_KING : Name.B_KING;
     }
 }
 
@@ -189,6 +168,7 @@ class Queen extends ChessPiece {
         super(pos, color, parentBoard);
     }
 
+    // Returns true if the square if occupied
     private boolean checkSquare(int p1, int p2) {
         Pos to_check = new Pos(p1, p2);
         int ocup = isOccupied(to_check);
@@ -196,11 +176,10 @@ class Queen extends ChessPiece {
             case (0):
                 possibleMoves.add(to_check);
                 break;
-            case (1):
-                protectedPieces.add(to_check);
-                return true;
+            // Fallthrough
             case (-1):
                 possibleMoves.add(to_check);
+            case (1):
                 return true;
         }
         return false;
@@ -255,7 +234,7 @@ class Queen extends ChessPiece {
 
     @Override
     public Name getName() {
-        return color.equals(Color.WHITE) ? Name.W_QUEEN : Name.B_QUEEN;
+        return color == Color.WHITE ? Name.W_QUEEN : Name.B_QUEEN;
     }
 }
 
@@ -264,6 +243,7 @@ class Rook extends ChessPiece {
         super(pos, color, parentBoard);
     }
 
+    // Returns true if the square is occupied
     private boolean checkSquare(int p1, int p2) {
         Pos to_check = new Pos(p1, p2);
         int ocup = isOccupied(to_check);
@@ -271,11 +251,11 @@ class Rook extends ChessPiece {
             case (0):
                 possibleMoves.add(to_check);
                 break;
-            case (1):
-                protectedPieces.add(to_check);
-                return true;
+            // Fallthrough
             case (-1):
                 possibleMoves.add(to_check);
+                return true;
+            case (1):
                 return true;
         }
         return false;
@@ -307,7 +287,7 @@ class Rook extends ChessPiece {
 
     @Override
     public Name getName() {
-        return color.equals(Color.WHITE) ? Name.W_ROOK : Name.B_ROOK;
+        return color == Color.WHITE ? Name.W_ROOK : Name.B_ROOK;
     }
 }
 
@@ -323,11 +303,11 @@ class Bishop extends ChessPiece {
             case (0):
                 possibleMoves.add(to_check);
                 break;
-            case (1):
-                protectedPieces.add(to_check);
-                return true;
+            // Fallthrough
             case (-1):
                 possibleMoves.add(to_check);
+                return true;
+            case (1):
                 return true;
         }
         return false;
@@ -359,7 +339,7 @@ class Bishop extends ChessPiece {
 
     @Override
     public Name getName() {
-        return color.equals(Color.WHITE) ? Name.W_BISHOP : Name.B_BISHOP;
+        return color == Color.WHITE ? Name.W_BISHOP : Name.B_BISHOP;
     }
 }
 
@@ -377,18 +357,16 @@ class Knight extends ChessPiece {
         for (int i = 0; i < 8; i++) {
             Pos to_check = new Pos(pos.x() + X[i], pos.y() + Y[i]);
             if (to_check.x() > 0 && to_check.x() < 8 && to_check.y() > 0 && to_check.y() < 8) {
-                if (isOccupied(pos) == 1) {
-                    protectedPieces.add(to_check);
-                } else {
+                if (isOccupied(pos) != 1) {
                     possibleMoves.add(to_check);
-                }
+                } 
             }
         }
     }
 
     @Override
     public Name getName() {
-        return color.equals(Color.WHITE) ? Name.W_KNIGHT : Name.B_KNIGHT;
+        return color == Color.WHITE ? Name.W_KNIGHT : Name.B_KNIGHT;
     }
 }
 
@@ -399,10 +377,10 @@ class Pawn extends ChessPiece {
 
     @Override
     public void generatePossibleMoves() {
-        int startingRow = color.equals(Color.WHITE) ? 2 : 6;
+        int startingRow = color == Color.WHITE ? 2 : 6;
         // If the pawn is white forward move will increase pos.y()
         // If the pawn is black forward move will decrease pos.y()
-        int forMov = color.equals(Color.WHITE) ? 1 : -1;
+        int forMov = color == Color.WHITE ? 1 : -1;
 
         // Forward move
         if (isOccupied(new Pos(pos.x(), pos.y() + forMov)) == 0) {
@@ -443,6 +421,6 @@ class Pawn extends ChessPiece {
 
     @Override
     public Name getName() {
-        return color.equals(Color.WHITE) ? Name.W_PAWN : Name.B_PAWN;
+        return color == Color.WHITE ? Name.W_PAWN : Name.B_PAWN;
     }
 }
