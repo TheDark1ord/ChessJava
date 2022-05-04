@@ -1,10 +1,12 @@
 package chess;
 
+import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import chess.ChessPiece.Name;
 
@@ -15,12 +17,13 @@ import chess.ChessPiece.Name;
 // Importing and exporting FEN strings
 public class ChessBoard {
     ChessBoard() {
-        chessBoard = new ChessPiece[8][8];
-        chessBoardList = new LinkedList<>();
     }
 
     // Load the position from the FEN string
     public void setPosition(String FEN) {
+        chessBoard = new ChessPiece[8][8];
+        chessBoardList = new LinkedList<>();
+
         // 0 - Piece Placement
         // 1 - Active color
         // 2 - Castling rights
@@ -53,6 +56,11 @@ public class ChessBoard {
                 switch (ch) {
                     case 'k':
                         newPiece = new King(new Pos(x, y), color, this);
+                        if (color == Color.WHITE) {
+                            WKingSt = new KingStatus(newPiece.pos);
+                        } else {
+                            BKingSt = new KingStatus(newPiece.pos);
+                        }
                         break;
                     case 'q':
                         newPiece = new Queen(new Pos(x, y), color, this);
@@ -120,20 +128,20 @@ public class ChessBoard {
 
         /// Other
         // Transform the position notation (a3, e4, etc.) into pos
-        enPassant = new Pos((int)(data[3].charAt(0) - 'a'), (int)(data[43.charAt(1) - '0'));
-        if (enPassant.x() > 7 || enPassant.x() < 0 || enPassant.y() > 7 || enPassant.y() < 0) {
+        enPassant = new Pos((int) (data[3].charAt(0) - 'a'), (int) (data[3].charAt(1) - '0'));
+        if (enPassant.x > 7 || enPassant.x < 0 || enPassant.y > 7 || enPassant.y < 0) {
             throw new IllegalArgumentException("Incorrect FEN!");
         }
 
         try {
             halfMoveClock = Integer.parseInt(data[4]);
             fullMoveClock = Integer.parseInt(data[5]);
-        } catch(NumberFormatException nfEx) {
+        } catch (NumberFormatException nfEx) {
             throw new IllegalArgumentException("Incorrect FEN!");
         }
         /// Other
 
-        generateKingStatus();
+        calculatePossition();
     }
 
     // Converts the position to FEN string
@@ -156,16 +164,20 @@ public class ChessBoard {
         }
 
         if (kSt.kingPos == from) {
-            piece.generatePossibleMoves();
-            if (!piece.possibleMoves.contains(to)) {
-                return false;
+            // Check if the move is castling to move a rook
+            if (to.equals(new Pos(kSt.kingPos.x - 2, kSt.kingPos.y))) {
+                // Castle short
+                Pos rookTo = new Pos(kSt.kingPos.x - 1, kSt.kingPos.y);
+                chessBoard[kSt.kingPos.y][0].setPos(rookTo);
+                chessBoard[rookTo.y][rookTo.x] = chessBoard[kSt.kingPos.y][0];
+                chessBoard[kSt.kingPos.y][0] = null;
+            } else if (to.equals(new Pos(kSt.kingPos.x + 2, kSt.kingPos.y))) {
+                // Castle long
+                Pos rookTo = new Pos(kSt.kingPos.x + 1, kSt.kingPos.y);
+                chessBoard[kSt.kingPos.y][7].setPos(rookTo);
+                chessBoard[rookTo.y][rookTo.x] = chessBoard[kSt.kingPos.y][7];
+                chessBoard[kSt.kingPos.y][7] = null;
             }
-            if (isUnderAttack(from, currentColor)) {
-                return false;
-            }
-
-            // Check for castling
-            // TODO
 
             // If a king moved castling is no longer possible
             kSt.kingPos = to;
@@ -179,28 +191,28 @@ public class ChessBoard {
             if (kSt.pinnedPieces.contains(piece)) {
                 return false;
             }
-            piece.generatePossibleMoves();
-            if (!piece.possibleMoves.contains(to)) {
-                return false;
-            }
             // If a king is in check, you should move the king or block the check
             if (kSt.checkState == KingStatus.CheckState.SINGLE && !kSt.toBlockSq.contains(to)) {
                 return false;
             }
         }
+        // This is safe, generatePossibleMoves was already called for current position
+        if (!piece.possibleMoves.contains(to)) {
+            return false;
+        }
 
         // All checks out, make a move
 
         // Check for capture
-        if (chessBoard[to.y()][to.x()] != null) {
-            ChessPiece capturedPiece = chessBoard[to.y()][to.x()];
+        if (chessBoard[to.y][to.x] != null) {
+            ChessPiece capturedPiece = chessBoard[to.y][to.x];
 
             // Update castling rights if a rook was captured
             if (capturedPiece.getName() == Name.W_ROOK || capturedPiece.getName() == Name.B_ROOK) {
-                if (capturedPiece.pos.x() == 0) {
+                if (capturedPiece.pos.x == 0) {
                     // Long castle
                     castling[whiteToMove ? 1 : 3] = false;
-                } else if (capturedPiece.pos.x() == 7) {
+                } else if (capturedPiece.pos.x == 7) {
                     // Short castle
                     castling[whiteToMove ? 0 : 2] = false;
                 }
@@ -210,15 +222,15 @@ public class ChessBoard {
             halfMoveClock = -1;
         }
         piece.pos = to;
-        chessBoard[to.y()][to.x()] = piece;
-        chessBoard[from.y()][from.x()] = null;
+        chessBoard[to.y][to.x] = piece;
+        chessBoard[from.y][from.x] = null;
 
         // If a rook moved, update castling rights
         if (piece.getName() == Name.W_ROOK || piece.getName() == Name.B_ROOK) {
-            if (from.x() == 0) {
+            if (from.x == 0) {
                 // Long castle
                 castling[whiteToMove ? 1 : 3] = false;
-            } else if (from.x() == 7) {
+            } else if (from.x == 7) {
                 // Short castle
                 castling[whiteToMove ? 0 : 2] = false;
             }
@@ -229,27 +241,27 @@ public class ChessBoard {
         halfMoveClock++;
         whiteToMove ^= true;
 
-        generateKingStatus();
-
+        calculatePossition();
         return true;
     }
 
-    // Generates KingStatus data for current side to move
-    public void generateKingStatus() {
-        // TODO
-    }
+    
 
     public ChessPiece getPiece(Pos pos) {
-        return chessBoard[pos.y()][pos.x()];
+        return chessBoard[pos.y][pos.x];
     }
 
     public boolean isUnderAttack(Pos pos, Color color) {
-        // TODO
-        return true;
+        if (color == Color.WHITE) {
+            return WKingSt.attackedSquares.get(pos.y * 8 + pos.x);
+        } else {
+            return BKingSt.attackedSquares.get(pos.y * 8 + pos.x);
+        }
     }
 
-    // This variables describe board state, everything, that can be deduced from
-    // reading FEN string
+    /// ---These variables describe board state, everything, that can be deduced
+    /// from
+    /// ---reading FEN string
     // Two different representations of a board
     // Array is used to acces pieces by position,
     // List is used to iterate through all of the pieces
@@ -292,8 +304,83 @@ public class ChessBoard {
         return enPassant;
     }
 
+    // Calculate moves and update KingStatus
+    private void calculatePossition() {
+        WKingSt.resetStatus();
+        BKingSt.resetStatus();
+
+        for (ChessPiece piece : chessBoardList) {
+            piece.generatePossibleMoves();
+            (piece.color == Color.WHITE ? BKingSt : WKingSt).attackedSquares.or(piece.getMoveMap());
+        }
+        updateKingStatus(WKingSt);
+        updateKingStatus(BKingSt);
+    }
+
+    private void updateKingStatus(KingStatus kStatus) {
+        ChessPiece king = getPiece(kStatus.kingPos);
+
+        // Candidate varibles
+        ChessPiece pinned = null;
+        List<Pos> toBlock = new LinkedList<>();
+
+        // Just to make a code smaller
+        BiFunction<Pos, ChessPiece, Boolean> checkSquare = (Pos pos, ChessPiece pinnedPiece) -> {
+            ChessPiece piece = getPiece(pos);
+
+            if (piece == null) {
+                toBlock.add(pos);
+                return false;
+            }
+            if (piece.color == king.color) {
+                if (pinnedPiece == null) {
+                    pinnedPiece = getPiece(pos);
+                }
+            } 
+            if (pinnedPiece != null) {
+                kStatus.pinnedPieces.add(pinnedPiece);
+            } else {
+                kStatus.addAttacker();
+                kStatus.toBlockSq.addAll(toBlock);
+            }
+            return true;
+        };
+
+        // Check diagonals
+        pinned = null;
+        toBlock.clear();
+        for (int x = kStatus.kingPos.x + 1, y = kStatus.kingPos.y + 1; x < 8 && y < 8; x++, y++) {
+            if (checkSquare.apply(new Pos(x, y), pinned)) break;
+        }
+        for (int x = kStatus.kingPos.x - 1, y = kStatus.kingPos.y + 1; x > 0 && y < 8; x--, y++) {
+            if (checkSquare.apply(new Pos(x, y), pinned)) break;
+        }
+        for (int x = kStatus.kingPos.x + 1, y = kStatus.kingPos.y - 1; x < 8 && y > 0; x++, y--) {
+            if (checkSquare.apply(new Pos(x, y), pinned)) break;
+        }
+        for (int x = kStatus.kingPos.x - 1, y = kStatus.kingPos.y - 1; x > 0 && y > 0; x--, y--) {
+            if (checkSquare.apply(new Pos(x, y), pinned)) break;
+        }
+
+        // Check straigh lines
+        for (int x = king.pos.x + 1; x < 8; x++) {
+            if (checkSquare.apply(new Pos(x, king.pos.y), pinned)) break;
+        }
+        for (int x = king.pos.x - 1; x >= 0; x--) {
+            if (checkSquare.apply(new Pos(x, king.pos.y), pinned)) break;
+        }
+        for (int y = king.pos.y + 1; y < 8; y++) {
+            if (checkSquare.apply(new Pos(king.pos.x, y), pinned)) break;
+        }
+        for (int y = king.pos.y - 1; y >= 0; y--) {
+            if (checkSquare.apply(new Pos(king.pos.x, y), pinned)) break;
+        }
+    }
+
     // It is all about checks and pins
     private static class KingStatus {
+        // If a king is under a check, an unpinned piece can block this check
+        // if a king is under a double check, no other piece can move
         public static enum CheckState {
             NONE, SINGLE, DOUBLE
         }
@@ -303,6 +390,19 @@ public class ChessBoard {
             pinnedPieces = new HashSet<>();
             toBlockSq = new HashSet<>();
             checkState = CheckState.NONE;
+            attackedSquares = new BitSet(64);
+        }
+        
+        // Reset all variables except KingPos
+        public void resetStatus() {
+            pinnedPieces = new HashSet<>();
+            toBlockSq = new HashSet<>();
+            checkState = CheckState.NONE;
+            attackedSquares = new BitSet(64);
+        }
+
+        public void addAttacker() {
+            checkState = checkState == CheckState.NONE ? CheckState.SINGLE : CheckState.DOUBLE;
         }
 
         public Pos kingPos;
@@ -312,8 +412,9 @@ public class ChessBoard {
         // Keeps track of squres, that can be occupied to block the check
         // Not used in the case of double check
         public Set<Pos> toBlockSq;
-        // Keep track of all the squares, attacked by black pieces
         public CheckState checkState;
+        // Keep track of all the squares, attacked by enemy pieces
+        public BitSet attackedSquares;
     }
 
     private KingStatus WKingSt;

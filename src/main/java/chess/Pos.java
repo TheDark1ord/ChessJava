@@ -3,20 +3,17 @@ package chess;
 import org.apache.commons.lang3.builder.*;
 
 public class Pos {
-    private final int x;
-    private final int y;
+    public final int x;
+    public final int y;
 
     Pos(int x, int y) {
         this.x = x;
         this.y = y;
     }
 
-    public int x() {
-        return x;
-    }
-
-    public int y() {
-        return y;
+    Pos(Pos pos) {
+        this.x = pos.x;
+        this.y = pos.y;
     }
 
     @Override
