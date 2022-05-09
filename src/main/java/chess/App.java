@@ -2,6 +2,8 @@ package chess;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -12,23 +14,20 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import javafx.embed.swing.SwingFXUtils;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
-import java.awt.image.BufferedImage;
 
-import org.apache.batik.transcoder.TranscoderException;
-import org.apache.batik.transcoder.TranscoderInput;
-import org.apache.batik.transcoder.TranscoderOutput;
-import org.apache.batik.transcoder.image.ImageTranscoder;
+import javax.imageio.ImageIO;
 
 public class App extends Application {
     // Visual settings
     private final int WIDTH = 720, HEIGHT = 720;
+    // How much to shrink piece textures
+    private final double squarePadding = 0.05;
     private final String title = "Chess";
 
     private final Color whiteColor = Color.web("0xf5e6bf");
@@ -133,7 +132,7 @@ public class App extends Application {
     private void drawBackground(GraphicsContext context) {
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
-                context.setFill((x + y) % 2 == 1 ? blackColor : whiteColor);
+                context.setFill((x + y) % 2 == 0 ? blackColor : whiteColor);
                 context.fillRect(squareWidth * x, HEIGHT - squareHeight * (y + 1), squareWidth, squareHeight);
             }
         }
@@ -155,13 +154,14 @@ public class App extends Application {
     private void drawPieces(GraphicsContext context) {
         for (ChessPiece piece : board) {
             Integer index = getPieceTextureIndex(piece.getName(), piece.color);
+            Double paddingX = squareWidth * squarePadding; 
+            Double paddingY = squareHeight * squarePadding; 
             // Compare by adress
             if (piece == selectedPiece) {
                 // Draw dragged piece under the cursor
                 if (mouseHold) {
                     context.drawImage(
                             piceTextures[index],
-                            0, 0, squareWidth, squareHeight,
                             mousePos.x - squareWidth / 2, mousePos.y - squareHeight / 2,
                             squareWidth, squareHeight);
 
@@ -170,9 +170,8 @@ public class App extends Application {
             }
             context.drawImage(
                     piceTextures[index],
-                    0, 0, squareWidth, squareHeight,
-                    piece.pos.x * squareWidth, HEIGHT - (piece.pos.y + 1) * squareHeight,
-                    squareWidth, squareHeight);
+                    piece.pos.x * squareWidth + paddingX, HEIGHT - (piece.pos.y + 1) * squareHeight + paddingY,
+                    squareWidth - paddingX * 2, squareHeight - paddingY * 2);
         }
     }
 
@@ -220,29 +219,27 @@ public class App extends Application {
             throw new RuntimeException("Texture file not found!");
 
         List<String> filenames = Arrays.asList(
-                "wK", "wQ", "wR",
-                "wN", "wB", "wP",
-                "bK", "bQ", "bR",
-                "bN", "bB", "bP");
+                "wK.svg", "wQ.svg", "wR.svg",
+                "wN.svg", "wB.svg", "wP.svg",
+                "bK.svg", "bQ.svg", "bR.svg",
+                "bN.svg", "bB.svg", "bP.svg");
 
         for (int i = 0; i < filenames.size(); i++) {
-            if (!(new File(texturePath + filenames.get(i))).exists())
+            if (!(new File(texturePath + filenames.get(i))).exists()) {
                 throw new RuntimeException("Texture file not found!");
-
-            BufferedImageTranscoder transcoder = new BufferedImageTranscoder();
-            try (InputStream file = getClass().getResourceAsStream(texturePath + filenames.get(i))) {
-                TranscoderInput transIn = new TranscoderInput(file);
-                try {
-                    transcoder.transcode(transIn, null);
-                    piceTextures[i] = SwingFXUtils.toFXImage(transcoder.getBufferedImage(), null);
-                } catch (TranscoderException ex) {
-                    ex.printStackTrace();
-                }
-            } catch (IOException io) {
-                io.printStackTrace();
             }
 
-            piceTextures[i] = new Image(new File(texturePath + filenames.get(i)).toURI().toString());
+            BufferedImage bImg;
+            try {
+                bImg = ImageIO.read(new File(texturePath + filenames.get(i)));
+            } catch (IOException ioEx) {
+                System.out.println(ioEx.getMessage());
+                System.exit(1);
+
+                // To make compiler happy)
+                return;
+            }
+            piceTextures[i] = SwingFXUtils.toFXImage(bImg, null);
         }
     }
 
@@ -271,22 +268,4 @@ public class App extends Application {
 
     private final String currentPath = System.getProperty("user.dir");
     private final String resourcePath = "\\Resources";
-}
-
-class BufferedImageTranscoder extends ImageTranscoder {
-    private BufferedImage img = null;
-
-    @Override
-    public BufferedImage createImage(int width, int height) {
-        return new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-    }
-
-    @Override
-    public void writeImage(BufferedImage img, TranscoderOutput to) throws TranscoderException {
-        this.img = img;
-    }
-
-    public BufferedImage getBufferedImage() {
-        return img;
-    }
 }
