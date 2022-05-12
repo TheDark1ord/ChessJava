@@ -12,14 +12,14 @@
     <dependencies>
         <dependency>
             <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>13</version>
+            <artifactId>javafx-fxml</artifactId>
+            <version>18</version>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
-            <artifactId>javafx-fxml</artifactId>
-            <version>13</version>
-        </dependency>
+            <artifactId>javafx-media</artifactId>
+            <version>18</version>
+        </dependency>        
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-swing</artifactId>
@@ -55,6 +55,13 @@
             <groupId>batik</groupId>
             <artifactId>batik-transcoder</artifactId>
             <version>1.6-1</version>
+            <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>fop</artifactId>
+                    <groupId>fop</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
     <build>
