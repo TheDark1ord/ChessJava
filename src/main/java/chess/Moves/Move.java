@@ -30,7 +30,7 @@ public class Move {
     }
 
     // Corresponding letter for a coordinate
-    private String posNot = "abcdefgh";
+    static private String posNot = "abcdefgh";
     @Override
     public String toString() {
         StringBuilder retString = new StringBuilder();

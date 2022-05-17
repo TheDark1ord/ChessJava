@@ -11,7 +11,7 @@ public class Vector {
         this.y = y;
     }
 
-    Vector(Vector pos) {
+    public Vector(Vector pos) {
         this.x = pos.x;
         this.y = pos.y;
     }

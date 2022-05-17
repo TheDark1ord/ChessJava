@@ -27,8 +27,8 @@ import javafx.scene.media.MediaPlayer;
 
 import chess.Logic.ChessBoard;
 import chess.Logic.ChessPiece;
+import chess.Logic.MoveGeneration;
 import chess.Logic.ChessBoard.GameResult;
-import chess.Logic.ChessPiece.ChessColor;
 import chess.Moves.Castling;
 import chess.Moves.Move;
 
@@ -68,6 +68,7 @@ public class App extends Application {
 
         // Set up the position
         board = new ChessBoard();
+        moveGenerator = new MoveGeneration(board);
         // Load starting position
         board.setPosition(startingPos);
 
@@ -153,7 +154,7 @@ public class App extends Application {
                         flipTheBoard ^= true;
                         break;
                     case LEFT:
-                        board.undoMove();
+                        moveGenerator.undoMove();
                     default:
                         break;
                 }
@@ -233,7 +234,7 @@ public class App extends Application {
         final double radX = squareWidth / 3;
         final double radY = squareHeight / 3;
 
-        for (Move move : board.getPieceMoves(piece)) {
+        for (Move move : moveGenerator.getPieceMoves(piece)) {
             context.setLineWidth(5);
 
             if (flipTheBoard) {
@@ -251,8 +252,8 @@ public class App extends Application {
         prevFrom = selectedPiece.pos();
         prevTo = to;
 
-        if (board.makeAMove(new Move(selectedPiece, prevFrom, to))) {
-            playSound(whatToPlay(board.getLastMove()), board.getCurrentColor());
+        if (moveGenerator.makeAMove(new Move(selectedPiece, prevFrom, to))) {
+            playSound(whatToPlay(board.peekLastMove()), board.getCurrentColor());
 
             selectedPiece = null;
             return true;
@@ -287,16 +288,16 @@ public class App extends Application {
         GameOver
     };
 
-    private void playSound(Sound sound, ChessColor side) {
+    private void playSound(Sound sound, chess.Logic.ChessPiece.Color color) {
         int ordinal = sound.ordinal();
         int index;
 
         // The first 4 sounds are slightly different for black and white
         if (ordinal < 4) {
-            index = ordinal * 2 + side.ordinal();
+            index = ordinal * 2 + color.ordinal();
         } else {
             // The next are identical for both sides
-            index = 9;
+            index = 8;
         }
 
         MediaPlayer player = new MediaPlayer(sounds[index]);
@@ -375,13 +376,14 @@ public class App extends Application {
         }
     }
 
-    private Integer getPieceTextureIndex(ChessPiece.Name name, ChessPiece.ChessColor color) {
-        return name.ordinal() + (color == ChessPiece.ChessColor.BLACK ? (piceTextures.length / 2) : 0);
+    private Integer getPieceTextureIndex(ChessPiece.Name name, ChessPiece.Color color) {
+        return name.ordinal() + (color == ChessPiece.Color.BLACK ? (piceTextures.length / 2) : 0);
     }
 
     private Image[] piceTextures;
 
     private ChessBoard board;
+    private MoveGeneration moveGenerator;
     private ChessPiece selectedPiece;
     // Previous move
     private Vector prevFrom, prevTo;

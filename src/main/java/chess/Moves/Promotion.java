@@ -11,13 +11,23 @@ public class Promotion extends Move {
     public enum PromoteTo {INPUT, QUEEN, ROOK, BISHOP, KNIGHT};
     public PromoteTo promoteTo;
 
-    Promotion(ChessPiece piece, Vector from, Vector to) {
+    public Promotion(ChessPiece piece, Vector from, Vector to) {
         super(piece, from, to);
         promoteTo = PromoteTo.INPUT;
     }
 
-    Promotion(ChessPiece piece, Vector from, Vector to, PromoteTo promoteTo) {
+    public Promotion(ChessPiece piece, Vector from, Vector to, ChessPiece captured) {
+        super(piece, from, to, captured);
+        promoteTo = PromoteTo.INPUT;
+    }
+
+    public Promotion(ChessPiece piece, Vector from, Vector to, PromoteTo promoteTo) {
         super(piece, from, to);
+        this.promoteTo = promoteTo;
+    }
+
+    public Promotion(ChessPiece piece, Vector from, Vector to, ChessPiece captured, PromoteTo promoteTo) {
+        super(piece, from, to, captured);
         this.promoteTo = promoteTo;
     }
 

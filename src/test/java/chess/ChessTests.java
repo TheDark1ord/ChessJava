@@ -3,6 +3,7 @@ package chess;
 import org.junit.Test;
 
 import chess.Logic.ChessBoard;
+import chess.Logic.MoveGeneration;
 import chess.Moves.Move;
 
 import java.util.Arrays;
@@ -21,17 +22,44 @@ public class ChessTests {
     private static String pos5FEN = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
 
     @Test
-    public void compareResults() {
-        ChessBoard board = new ChessBoard(pos1FEN);
-        System.out.println(countMoves(board, 1));
-        System.out.println(countMoves(board, 2));
-        System.out.println(countMoves(board, 3));
-        System.out.println(countMoves(board, 4));
-        System.out.println(countMoves(board, 5));
-        //System.out.println(countMoves(board, 6));
+    public void posistion1Test() {
+        ChessBoard board = new ChessBoard("rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR b KQkq - 0 1");
+        MoveGeneration generator = new MoveGeneration(board);
+
+        //System.out.println(countMoves(generator, 1));
+        //System.out.println(countMoves(generator, 2));
+        System.out.println(countMoves(generator, 3));
+        //System.out.println(countMoves(generator, 4));
+        //System.out.println(countMoves(generator, 5));
+
+        //Assert.assertTrue(countMoves(generator, 1) == pos1MoveCount.get(1));
+        //Assert.assertTrue(countMoves(generator, 2) == pos1MoveCount.get(2));
+        //Assert.assertTrue(countMoves(generator, 3) == pos1MoveCount.get(3));
+        //Assert.assertTrue(countMoves(generator, 4) == pos1MoveCount.get(4));
+        // Assert.assertTrue(countMoves(generator, 1) == pos1MoveCount.get(5));
+        // Assert.assertTrue(countMoves(generator, 1) == pos1MoveCount.get(6));
     }
 
-    private long countMoves(ChessBoard board, int depth) {
+    @Test
+    public void posistion3Test() {
+        ChessBoard board = new ChessBoard(pos3FEN);
+        MoveGeneration generator = new MoveGeneration(board);
+
+        //System.out.println(countMoves(generator, 1));
+        //System.out.println(countMoves(generator, 2));
+        //System.out.println(countMoves(generator, 3));
+        //System.out.println(countMoves(generator, 4));
+        System.out.println(countMoves(generator, 5));
+
+        //Assert.assertTrue(countMoves(generator, 1) == pos3MoveCount.get(1));
+        //Assert.assertTrue(countMoves(generator, 2) == pos3MoveCount.get(2));
+        //Assert.assertTrue(countMoves(generator, 3) == pos3MoveCount.get(3));
+        //Assert.assertTrue(countMoves(generator, 4) == pos3MoveCount.get(4));
+        // Assert.assertTrue(countMoves(generator, 1) == pos1MoveCount.get(5));
+        // Assert.assertTrue(countMoves(generator, 1) == pos1MoveCount.get(6));
+    }
+
+    private long countMoves(MoveGeneration generator, int depth) {
         if (depth == 0) {
             return 1;
         }
@@ -39,17 +67,18 @@ public class ChessTests {
         var wrapper = new Object() {
             long moveCount = 0;
         };
-        Stream<Move> allMoves = board.getAllMoves();
+        Stream<Move> allMoves = generator.getAllMoves();
         allMoves.forEach((Move move) -> {
-            board.makeAMove(move);
-            long curMoves = countMoves(board, depth - 1);
+            generator.makeAMove(move);
+
+            long curMoves = countMoves(generator, depth - 1);
+
+            if (depth == 3) {
+                System.out.println(String.format("%s : %d", move.toString(), curMoves));
+            }
 
             wrapper.moveCount += curMoves;
-            //if (depth == 2) {
-            //    System.out.println(String.format("%s: %d", move.toString(), curMoves));
-            //}
-
-            board.undoMove();
+            generator.undoMove();
         });
         return wrapper.moveCount;
     }
