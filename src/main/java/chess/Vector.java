@@ -16,9 +16,21 @@ public class Vector {
         this.y = pos.y;
     }
 
+    // Corresponding letter for a coordinate
+    static private String posNot = "abcdefgh";
+
+    @Override
+    public String toString() {
+        return posNot.charAt(this.x) + String.valueOf(this.y + 1);
+    }
+
     // Some vector math
     static public Vector add(Vector lhs, Vector rhs) {
         return new Vector(lhs.x + rhs.x, lhs.y + rhs.y);
+    }
+
+    static public Vector sub(Vector lhs, Vector rhs) {
+        return new Vector(lhs.x - rhs.x, lhs.y - rhs.y);
     }
 
     static public Vector mul(Vector lhs, int rhs) {
@@ -31,10 +43,22 @@ public class Vector {
         return this;
     }
 
+    public Vector sub(Vector other) {
+        this.x -= other.x;
+        this.y -= other.y;
+        return this;
+    }
+
     public Vector mul(int other) {
         this.x *= other;
         this.y *= other;
         return this;
+    }
+
+    // True if other == this * num;
+    public boolean isMultiple(Vector other) {
+        // This works, but i don't have a proof
+        return this.x * other.y == this.y * other.x;
     }
 
     @Override

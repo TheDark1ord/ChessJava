@@ -1,5 +1,7 @@
 package chess.Moves;
 
+import java.util.HashMap;
+
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -8,7 +10,10 @@ import chess.Logic.ChessPiece;
 
 public class Promotion extends Move {
     // INPUT - still waiting for user input
-    public enum PromoteTo {INPUT, QUEEN, ROOK, BISHOP, KNIGHT};
+    public enum PromoteTo {
+        INPUT, QUEEN, ROOK, BISHOP, KNIGHT
+    };
+
     public PromoteTo promoteTo;
 
     public Promotion(ChessPiece piece, Vector from, Vector to) {
@@ -29,6 +34,17 @@ public class Promotion extends Move {
     public Promotion(ChessPiece piece, Vector from, Vector to, ChessPiece captured, PromoteTo promoteTo) {
         super(piece, from, to, captured);
         this.promoteTo = promoteTo;
+    }
+
+    private static HashMap<PromoteTo, Character> promToChar = new HashMap<>() {{
+        put(PromoteTo.INPUT, 'q'); put(PromoteTo.QUEEN, 'q');
+        put(PromoteTo.ROOK, 'r'); put(PromoteTo.BISHOP, 'b');
+        put(PromoteTo.KNIGHT, 'n');  
+    }};
+
+    @Override
+    public String toString() {
+        return super.toString() + promToChar.get(promoteTo);
     }
 
     @Override

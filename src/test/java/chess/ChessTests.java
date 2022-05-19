@@ -23,38 +23,31 @@ public class ChessTests {
 
     @Test
     public void posistion1Test() {
-        ChessBoard board = new ChessBoard("rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR b KQkq - 0 1");
+        ChessBoard board = new ChessBoard(pos1FEN);
         MoveGeneration generator = new MoveGeneration(board);
 
-        //System.out.println(countMoves(generator, 1));
-        //System.out.println(countMoves(generator, 2));
-        System.out.println(countMoves(generator, 3));
-        //System.out.println(countMoves(generator, 4));
-        //System.out.println(countMoves(generator, 5));
-
-        //Assert.assertTrue(countMoves(generator, 1) == pos1MoveCount.get(1));
-        //Assert.assertTrue(countMoves(generator, 2) == pos1MoveCount.get(2));
-        //Assert.assertTrue(countMoves(generator, 3) == pos1MoveCount.get(3));
-        //Assert.assertTrue(countMoves(generator, 4) == pos1MoveCount.get(4));
-        // Assert.assertTrue(countMoves(generator, 1) == pos1MoveCount.get(5));
-        // Assert.assertTrue(countMoves(generator, 1) == pos1MoveCount.get(6));
+        Assert.assertTrue(countMoves(generator, 1) == pos1MoveCount.get(1));
+        Assert.assertTrue(countMoves(generator, 2) == pos1MoveCount.get(2));
+        Assert.assertTrue(countMoves(generator, 3) == pos1MoveCount.get(3));
+        Assert.assertTrue(countMoves(generator, 4) == pos1MoveCount.get(4));
+        Assert.assertTrue(countMoves(generator, 5) == pos1MoveCount.get(5));
     }
 
     @Test
     public void posistion3Test() {
-        ChessBoard board = new ChessBoard(pos3FEN);
+        ChessBoard board = new ChessBoard(pos5FEN);
         MoveGeneration generator = new MoveGeneration(board);
 
-        //System.out.println(countMoves(generator, 1));
-        //System.out.println(countMoves(generator, 2));
-        //System.out.println(countMoves(generator, 3));
-        //System.out.println(countMoves(generator, 4));
-        System.out.println(countMoves(generator, 5));
+        System.out.println(countMoves(generator, 1));
+        System.out.println(countMoves(generator, 2));
+        System.out.println(countMoves(generator, 3));
+        System.out.println(countMoves(generator, 4));
+        // System.out.println(countMoves(generator, 5));
 
-        //Assert.assertTrue(countMoves(generator, 1) == pos3MoveCount.get(1));
-        //Assert.assertTrue(countMoves(generator, 2) == pos3MoveCount.get(2));
-        //Assert.assertTrue(countMoves(generator, 3) == pos3MoveCount.get(3));
-        //Assert.assertTrue(countMoves(generator, 4) == pos3MoveCount.get(4));
+        // Assert.assertTrue(countMoves(generator, 1) == pos3MoveCount.get(1));
+        // Assert.assertTrue(countMoves(generator, 2) == pos3MoveCount.get(2));
+        // Assert.assertTrue(countMoves(generator, 3) == pos3MoveCount.get(3));
+        // Assert.assertTrue(countMoves(generator, 4) == pos3MoveCount.get(4));
         // Assert.assertTrue(countMoves(generator, 1) == pos1MoveCount.get(5));
         // Assert.assertTrue(countMoves(generator, 1) == pos1MoveCount.get(6));
     }
@@ -70,12 +63,7 @@ public class ChessTests {
         Stream<Move> allMoves = generator.getAllMoves();
         allMoves.forEach((Move move) -> {
             generator.makeAMove(move);
-
             long curMoves = countMoves(generator, depth - 1);
-
-            if (depth == 3) {
-                System.out.println(String.format("%s : %d", move.toString(), curMoves));
-            }
 
             wrapper.moveCount += curMoves;
             generator.undoMove();

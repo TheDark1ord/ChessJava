@@ -9,7 +9,7 @@ import chess.Logic.ChessPiece;
 public class Move {
     // Piece that moves
     public final ChessPiece piece;
-    public final ChessPiece captured;
+    public ChessPiece captured;
     public final Vector from;
     public final Vector to;
 
@@ -29,22 +29,9 @@ public class Move {
         this.captured = captured;
     }
 
-    // Corresponding letter for a coordinate
-    static private String posNot = "abcdefgh";
     @Override
     public String toString() {
-        StringBuilder retString = new StringBuilder();
-        retString.append(posNot.charAt(from.x));
-        retString.append(String.valueOf(from.y + 1));
-
-        if (captured != null) {
-            retString.append("x");
-        }
-
-        retString.append(posNot.charAt(to.x));
-        retString.append(String.valueOf(to.y + 1));
-
-        return retString.toString();
+        return this.from.toString() + this.to.toString();
     }
 
     @Override

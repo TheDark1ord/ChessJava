@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.imageio.ImageIO;
+
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 
@@ -46,7 +47,7 @@ public class App extends Application {
     private final Color selectedColor = Color.web("0xff4545", 0.5);
     private final Color prevMoveColor = Color.web("0xfeff93", 0.75);
 
-    private final String startingPos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    private final String startingPos = "r1k1q1nr/pppbP1pp/5p2/8/5B2/8/PPnN1PPP/R2KQBNR w KQ - 1 8";
 
     public static void main(String[] args) {
         launch(args);
@@ -70,7 +71,7 @@ public class App extends Application {
         board = new ChessBoard();
         moveGenerator = new MoveGeneration(board);
         // Load starting position
-        board.setPosition(startingPos);
+        board.setPosition("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
 
         // Events
         scene.addEventHandler(MouseEvent.MOUSE_MOVED, mousePosHandler);
@@ -174,7 +175,7 @@ public class App extends Application {
             context.setFill(selectedColor);
 
             if (flipTheBoard) {
-                context.fillRect(squareWidth * selectedPiece.pos().x,
+                context.fillRect(WIDTH - squareWidth * (selectedPiece.pos().x + 1),
                         squareHeight * (selectedPiece.pos().y + 1), squareWidth, squareHeight);
             } else {
                 context.fillRect(squareWidth * selectedPiece.pos().x,
@@ -185,9 +186,9 @@ public class App extends Application {
             context.setFill(prevMoveColor);
 
             if (flipTheBoard) {
-                context.fillRect(squareWidth * prevFrom.x,
+                context.fillRect(WIDTH - squareWidth * (prevFrom.x + 1),
                         squareHeight * prevFrom.y, squareWidth, squareHeight);
-                context.fillRect(squareWidth * prevTo.x,
+                context.fillRect(WIDTH - squareWidth * (prevTo.x + 1),
                         squareHeight * prevTo.y, squareWidth, squareHeight);
             } else {
                 context.fillRect(squareWidth * prevFrom.x,
@@ -218,7 +219,7 @@ public class App extends Application {
             if (flipTheBoard) {
                 context.drawImage(
                         piceTextures[index],
-                        piece.pos().x * squareWidth + paddingX, piece.pos().y * squareHeight + paddingY,
+                        WIDTH - (piece.pos().x + 1) * squareWidth + paddingX, piece.pos().y * squareHeight + paddingY,
                         squareWidth - paddingX * 2, squareHeight - paddingY * 2);
             } else {
                 context.drawImage(
@@ -238,7 +239,7 @@ public class App extends Application {
             context.setLineWidth(5);
 
             if (flipTheBoard) {
-                context.strokeOval((move.to.x + 0.5) * squareWidth - radX / 2,
+                context.strokeOval(WIDTH - (move.to.x + 0.5) * squareWidth - radX / 2,
                         (move.to.y + 0.5) * squareHeight - radY / 2, radX, radY);
             } else {
                 context.strokeOval((move.to.x + 0.5) * squareWidth - radX / 2,
@@ -368,7 +369,7 @@ public class App extends Application {
 
     private Vector screenToBoardCoord(Vector screenCoord) {
         if (flipTheBoard) {
-            return new Vector((int) (screenCoord.x / squareWidth),
+            return new Vector((int) ((WIDTH - screenCoord.x) / squareWidth),
                     (int) (screenCoord.y / squareWidth));
         } else {
             return new Vector((int) (screenCoord.x / squareWidth),

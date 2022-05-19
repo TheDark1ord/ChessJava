@@ -169,11 +169,9 @@ public class ChessBoard implements Iterable<ChessPiece> {
     }
 
     void decrementClocks() {
-
         if (whiteToMove) {
             fullMoveClock--;
         }
-        halfMoveClock--;
         whiteToMove ^= true;
     }
 
@@ -186,7 +184,7 @@ public class ChessBoard implements Iterable<ChessPiece> {
     void movePiece(Move move) {
         move.piece.pos = move.to;
         chessBoard[move.to.y][move.to.x] = move.piece;
-        chessBoard[move.from.y][move.from.x] = move.captured;
+        chessBoard[move.from.y][move.from.x] = null;
     }
 
     boolean[] castling() {
@@ -209,21 +207,13 @@ public class ChessBoard implements Iterable<ChessPiece> {
     void updateKingStatus(KingStatus kStatus) {
         ChessPiece king = getPiece(kStatus.kingPos);
 
+        if (king == null) {
+            System.out.println("");
+        }
+
         // Candidate varibles
         ChessPiece pinned = null;
         BitSet toBlock = new BitSet(64);
-
-        for (int i = 0; i < 8; i++) {
-            Vector toCheck = Vector.add(king.pos, Knight.knightPosOffsets[i]);
-            if (toCheck.x >= 0 && toCheck.x < 8 && toCheck.y >= 0 && toCheck.y < 8) {
-                ChessPiece piece = getPiece(toCheck);
-                if (piece != null && piece.getName() == Name.KNIGHT && piece.color != king.color) {
-
-                    kStatus.addAttacker();
-                    kStatus.toBlockSq.set(piece.pos.y * 8 + piece.pos.x);
-                }
-            }
-        }
 
         for (int directionIndex = 0; directionIndex < 8; directionIndex++) {
             Vector pos = new Vector(king.pos);
@@ -257,6 +247,7 @@ public class ChessBoard implements Iterable<ChessPiece> {
                         (piece.getName() == Name.BISHOP && directionIndex >= 4) ||
                         (piece.getName() == Name.ROOK && directionIndex < 4)) {
                     if (pinned != null) {
+                        pinned.pinnedDirection.add(ChessPiece.directionOffsets[directionIndex]);
                         kStatus.pinnedPieces.set(pinned.pos.y * 8 + pinned.pos.x);
                     } else {
                         toBlock.set(pos.y * 8 + pos.x);
@@ -460,9 +451,79 @@ public class ChessBoard implements Iterable<ChessPiece> {
         updateKingStatus(BKingSt);
     }
 
+    private static final HashMap<ChessPiece.Name, Character> nameToChar = new HashMap<>() {
+        {
+            put(Name.KING, 'k');
+            put(Name.QUEEN, 'q');
+            put(Name.ROOK, 'r');
+            put(Name.BISHOP, 'b');
+            put(Name.KNIGHT, 'n');
+            put(Name.PAWN, 'p');
+        }
+    };
+
     // Converts the position to FEN string
     public String toFEN() {
-        return "";
+        StringBuilder retFen = new StringBuilder();
+
+        /// Piece Placement
+        int emptyConsec = 0;
+        for (int y = 7; y >= 0; y--) {
+            for (int x = 0; x < 8; x++) {
+                ChessPiece piece = chessBoard[y][x];
+
+                if (piece == null) {
+                    emptyConsec++;
+                } else {
+                    if (emptyConsec != 0) {
+                        retFen.append(Integer.toString(emptyConsec));
+                        emptyConsec = 0;
+                    }
+
+                    retFen.append(
+                            piece.color == Color.BLACK ? nameToChar.get(piece.getName())
+                                    : Character.toUpperCase(nameToChar.get(piece.getName())));
+                }
+            }
+            if (emptyConsec != 0) {
+                retFen.append(Integer.toString(emptyConsec));
+                emptyConsec = 0;
+            }
+            retFen.append('/');
+        }
+        retFen.append(' ');
+
+        // Move
+        retFen.append(whiteToMove ? 'w' : 'b');
+        retFen.append(' ');
+
+        // Castling
+        if (castlingRights[0])
+            retFen.append('K');
+        if (castlingRights[1])
+            retFen.append('Q');
+        if (castlingRights[2])
+            retFen.append('k');
+        if (castlingRights[3])
+            retFen.append('q');
+        // If no castling is allowed
+        if (retFen.charAt(retFen.length() - 1) == ' ')
+            retFen.append('-');
+        retFen.append(' ');
+
+        // En passant
+        if (enPassant == null) {
+            retFen.append('-');
+        } else {
+            retFen.append(enPassant.toString());
+        }
+        retFen.append(' ');
+
+        // Clocks
+        retFen.append(String.valueOf(halfMoveClock) + " ");
+        retFen.append(String.valueOf(fullMoveClock));
+
+        return retFen.toString();
     }
 }
 
