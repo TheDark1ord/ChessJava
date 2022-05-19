@@ -47,7 +47,7 @@ public class App extends Application {
     private final Color selectedColor = Color.web("0xff4545", 0.5);
     private final Color prevMoveColor = Color.web("0xfeff93", 0.75);
 
-    private final String startingPos = "r1k1q1nr/pppbP1pp/5p2/8/5B2/8/PPnN1PPP/R2KQBNR w KQ - 1 8";
+    private final String startingPos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     public static void main(String[] args) {
         launch(args);
@@ -71,7 +71,7 @@ public class App extends Application {
         board = new ChessBoard();
         moveGenerator = new MoveGeneration(board);
         // Load starting position
-        board.setPosition("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+        board.setPosition("r1Qq1k1r/pp2bppp/n1p5/3B4/8/8/PPP1NnPP/RNBQK2R/ b KQ - 3 9");
 
         // Events
         scene.addEventHandler(MouseEvent.MOUSE_MOVED, mousePosHandler);

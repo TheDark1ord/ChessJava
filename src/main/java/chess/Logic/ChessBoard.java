@@ -51,6 +51,7 @@ public class ChessBoard implements Iterable<ChessPiece> {
         if (prevMoves.empty()) {
             return null;
         }
+
         return prevMoves.pop();
     }
 
@@ -143,13 +144,11 @@ public class ChessBoard implements Iterable<ChessPiece> {
     // Load prev board state
     void loadBoardState() {
         BoardState prevState = prevStates.pop();
-
+        
         castlingRights = prevState.castlingRights;
         halfMoveClock = prevState.halfMoveClock;
         enPassant = prevState.enPassant;
         gameResult = GameResult.NONE;
-
-        posHashes.remove(new PositionHash(chessBoardList));
     }
 
     // Add a move to prev moves
@@ -173,6 +172,19 @@ public class ChessBoard implements Iterable<ChessPiece> {
             fullMoveClock--;
         }
         whiteToMove ^= true;
+    }
+
+    void decrementPosHash() {
+        PositionHash currentHash = new PositionHash(chessBoardList);
+        if (!posHashes.containsKey(currentHash)) {
+            return;
+        }
+
+        if (posHashes.get(currentHash) == 1) {
+            posHashes.remove(currentHash);
+        } else {
+            posHashes.merge(currentHash, -1, Integer::sum);
+        }
     }
 
     void updateCastlingRights(ChessPiece.Color color, Side side) {
@@ -491,6 +503,8 @@ public class ChessBoard implements Iterable<ChessPiece> {
             }
             retFen.append('/');
         }
+        // Delete last / after the position
+        retFen.deleteCharAt(retFen.length() - 1);
         retFen.append(' ');
 
         // Move
@@ -537,11 +551,11 @@ class PositionHash {
         hashCode = builder.toHashCode();
     }
 
-    private int hashCode;
+    private long hashCode;
 
     @Override
     public int hashCode() {
-        return hashCode;
+        return (int)hashCode;
     }
 
     @Override
@@ -553,6 +567,6 @@ class PositionHash {
             return false;
         }
 
-        return this.hashCode == (((PositionHash) other).hashCode());
+        return this.hashCode == (((PositionHash) other).hashCode);
     }
 }

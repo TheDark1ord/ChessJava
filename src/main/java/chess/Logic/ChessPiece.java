@@ -163,6 +163,7 @@ public abstract class ChessPiece {
     @Override
     public int hashCode() {
         return new HashCodeBuilder()
+                .append(getName().hashCode())
                 .append(pos.hashCode())
                 .append(color.hashCode())
                 .toHashCode();
