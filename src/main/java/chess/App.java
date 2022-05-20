@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import javax.imageio.ImageIO;
 
@@ -37,7 +38,7 @@ public class App extends Application {
     // Visual settings
     private final int WIDTH = 720, HEIGHT = 720;
     // Black at the bottom if true
-    private boolean flipTheBoard = false;
+    private boolean flipTheBoard;
     // How much to shrink piece textures
     private final double squarePadding = 0.05;
     private final String title = "Chess";
@@ -48,6 +49,10 @@ public class App extends Application {
     private final Color prevMoveColor = Color.web("0xfeff93", 0.75);
 
     private final String startingPos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+    private ChessPiece.Color playerColor;
+    private Stockfish stockfish;
+    private boolean engineIsActive = true;
 
     public static void main(String[] args) {
         launch(args);
@@ -71,7 +76,18 @@ public class App extends Application {
         board = new ChessBoard();
         moveGenerator = new MoveGeneration(board);
         // Load starting position
-        board.setPosition("r1Qq1k1r/pp2bppp/n1p5/3B4/8/8/PPP1NnPP/RNBQK2R/ b KQ - 3 9");
+        board.setPosition(startingPos);
+
+        stockfish = new Stockfish(board);
+
+        int coinFlip = new Random().nextInt(2);
+        playerColor = coinFlip == 0 ? ChessPiece.Color.WHITE : ChessPiece.Color.BLACK;
+        flipTheBoard = coinFlip == 1;
+
+        if (playerColor != ChessPiece.Color.WHITE) {
+            while (!stockfish.isReady()) {}
+            stockfish.feedPosition();
+        }
 
         // Events
         scene.addEventHandler(MouseEvent.MOUSE_MOVED, mousePosHandler);
@@ -93,6 +109,21 @@ public class App extends Application {
         GraphicsContext context = mainCanvas.getGraphicsContext2D();
         context.clearRect(0, 0, WIDTH, HEIGHT);
 
+        if (engineIsActive && board.getCurrentColor() != playerColor) {
+            try {
+                if (stockfish.isReady()) {
+                    Move stockfishMove = stockfish.getBestMove();
+
+                    if (stockfishMove != null) {
+                        selectedPiece = stockfishMove.piece;
+                        movePiece(stockfishMove.to);
+                    }
+                }
+            } catch (IOException e) {
+                engineIsActive = false;
+            }
+        }
+
         drawBackground(context);
         drawPieces(context);
         if (selectedPiece != null)
@@ -106,6 +137,10 @@ public class App extends Application {
             Vector destCoord = screenToBoardCoord(mousePos);
 
             if (ev.getEventType().equals(MouseEvent.MOUSE_PRESSED) && ev.getButton().equals(MouseButton.PRIMARY)) {
+                if (engineIsActive && board.getCurrentColor() != playerColor) {
+                    return;
+                }
+
                 if (selectedPiece != null) {
                     // Click on the same piece twice
                     if (selectedPiece.pos().equals(destCoord)) {
@@ -127,6 +162,7 @@ public class App extends Application {
             } else if (ev.getEventType().equals(MouseEvent.MOUSE_RELEASED)
                     && ev.getButton().equals(MouseButton.PRIMARY)) {
 
+                // Dragged a piece to another square
                 if (mouseHold && selectedPiece != null) {
                     if (!selectedPiece.pos().equals(destCoord)) {
                         if (!movePiece(destCoord)) {
@@ -156,6 +192,9 @@ public class App extends Application {
                         break;
                     case LEFT:
                         moveGenerator.undoMove();
+                        if (board.getCurrentColor() != playerColor) {
+                            moveGenerator.undoMove();
+                        }
                     default:
                         break;
                 }
@@ -176,7 +215,7 @@ public class App extends Application {
 
             if (flipTheBoard) {
                 context.fillRect(WIDTH - squareWidth * (selectedPiece.pos().x + 1),
-                        squareHeight * (selectedPiece.pos().y + 1), squareWidth, squareHeight);
+                        squareHeight * (selectedPiece.pos().y), squareWidth, squareHeight);
             } else {
                 context.fillRect(squareWidth * selectedPiece.pos().x,
                         HEIGHT - squareHeight * (selectedPiece.pos().y + 1), squareWidth, squareHeight);
@@ -255,8 +294,15 @@ public class App extends Application {
 
         if (moveGenerator.makeAMove(new Move(selectedPiece, prevFrom, to))) {
             playSound(whatToPlay(board.peekLastMove()), board.getCurrentColor());
-
             selectedPiece = null;
+
+            if (engineIsActive && board.getCurrentColor() != playerColor) {
+                try {
+                    stockfish.feedPosition();
+                } catch (IOException e) {
+                    engineIsActive = false;
+                }
+            }
             return true;
         } else {
             prevFrom = null;
