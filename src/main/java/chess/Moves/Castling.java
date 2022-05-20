@@ -7,7 +7,7 @@ import chess.Vector;
 import chess.Logic.ChessPiece;
 
 public class Castling extends Move {
-    public enum Side {SHORT, LONG};
+    public enum Side {SHORT, LONG}
     public Side side;
 
     // From and to represent king positions and not anything alse

@@ -5,20 +5,21 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 
 import chess.Logic.ChessBoard;
 import chess.Moves.Move;
 
-public class Stockfish {
+class Stockfish {
     private final String EnginePath = "\\Resources\\stockfish.exe";
     private final String currentPath = System.getProperty("user.dir");
 
-    private Process stockfishProcess;
-    private ChessBoard board;
+    private final Process stockfishProcess;
+    private final ChessBoard board;
 
-    Object ioMutex = new Object();
-    private Writer processInput;
-    private BufferedReader processOutput;
+    private final Object ioMutex = new Object();
+    private final Writer processInput;
+    private final BufferedReader processOutput;
 
     private boolean isThinking = false;
     private Move bestMove = null;
@@ -27,7 +28,7 @@ public class Stockfish {
         stockfishProcess = new ProcessBuilder(currentPath + EnginePath).start();
         this.board = board;
 
-        processInput = new OutputStreamWriter(stockfishProcess.getOutputStream(), "UTF-8");
+        processInput = new OutputStreamWriter(stockfishProcess.getOutputStream(), StandardCharsets.UTF_8);
         processOutput = new BufferedReader(new InputStreamReader(stockfishProcess.getInputStream()));
 
         writeCommand("isready");
@@ -39,13 +40,13 @@ public class Stockfish {
         stockfishProcess.destroy();
     }
 
-    public boolean feedPosition() throws IOException {
+    public void feedPosition() throws IOException {
         if (!isReady() || isThinking()) {
-            return false;
+            return;
         }
 
         writeCommand(String.format("position fen %s", board.toFEN()));
-        writeCommand(String.format("go movetime 1000"));
+        writeCommand("go movetime 1000");
 
         Thread waitForMove = new Thread() {
             public void run() {
@@ -53,8 +54,7 @@ public class Stockfish {
                     try {
                         waitForMove();
                         break;
-                    } catch (IOException e) {
-                    }
+                    } catch (IOException e) {}
                 }
 
                 synchronized(this) {
@@ -67,7 +67,6 @@ public class Stockfish {
         synchronized (this) {
             isThinking = true;
         }
-        return true;
     }
 
     public Move getBestMove() throws IOException {
@@ -124,7 +123,7 @@ public class Stockfish {
         }
     }
 
-    private static String squareNotation = "abcdefgh";
+    private static final String squareNotation = "abcdefgh";
 
     private void waitForMove() throws IOException {
         String moveLine;
@@ -145,7 +144,8 @@ public class Stockfish {
     }
 
     private String getLastLine() throws IOException {
-        String line = null;
+        String line;
+        // B for best move
         while ((line = readLine()).charAt(0) != 'b' ) {}
 
         return line;

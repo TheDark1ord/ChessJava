@@ -17,7 +17,7 @@ public class Vector {
     }
 
     // Corresponding letter for a coordinate
-    static private String posNot = "abcdefgh";
+    static private final String posNot = "abcdefgh";
 
     @Override
     public String toString() {
@@ -57,7 +57,7 @@ public class Vector {
 
     // True if other == this * num;
     public boolean isMultiple(Vector other) {
-        // This works, but i don't have a proof
+        // This works, but I don't have a proof
         return this.x * other.y == this.y * other.x;
     }
 

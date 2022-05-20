@@ -23,7 +23,7 @@ public class ChessBoard implements Iterable<ChessPiece> {
 
     public enum GameResult {
         NONE, WHITE_WON, BLACK_WON, DRAW
-    };
+    }
 
     public GameResult gameResult = GameResult.NONE;
 
@@ -83,7 +83,7 @@ public class ChessBoard implements Iterable<ChessPiece> {
         }
     }
 
-    // Used to track how many times a certain position occured during that game
+    // Used to track how many times a certain position occurred during that game
     private HashMap<PositionHash, Integer> posHashes;
 
     void checkRepetition() {
@@ -100,8 +100,8 @@ public class ChessBoard implements Iterable<ChessPiece> {
     /// reading FEN string
 
     // Two different representations of a board
-    // Array is used to acces pieces by position,
-    // List is used to iterate through all of the pieces
+    // Array is used to access pieces by position,
+    // List is used to iterate through all the pieces
     public ChessPiece[][] chessBoard;
     public List<ChessPiece> chessBoardList;
 
@@ -109,23 +109,23 @@ public class ChessBoard implements Iterable<ChessPiece> {
     Stack<BoardState> prevStates;
     // It is an array of 4 elements, it stores data on which side can castle,
     // Data is stored in this order: WShort, WLong, BShort, BLong
-    // Does not account for temporary castling restrinctions, i.e. checks or blocks
+    // Does not account for temporary castling restrictions, i.e. checks or blocks
     private boolean[] castlingRights;
     private boolean whiteToMove;
     // how many moves both players have made since the last pawn advance or piece
     // capture
-    // Used to inforce 50-move draw rule (no capture has been made and no pawn has
+    // Used to enforce 50-move draw rule (no capture has been made and no pawn has
     // been moved in the last fifty moves)
     int halfMoveClock;
     // Increments after the black move
     private int fullMoveClock;
     // Keeps track of double pawn moves (position behind the pawn)
     // If a pawn can attack the square, stored in this variable, then it is able
-    // to make the french move
+    // to make the French move
     public Vector enPassant;
 
     // Variables, that cannot be deduced when undoing the move
-    class BoardState {
+    static class BoardState {
         public BoardState(boolean[] castlingRights, int halfMoveClock, Vector enPassant) {
             this.castlingRights = castlingRights.clone();
             this.halfMoveClock = halfMoveClock;
@@ -219,12 +219,8 @@ public class ChessBoard implements Iterable<ChessPiece> {
     void updateKingStatus(KingStatus kStatus) {
         ChessPiece king = getPiece(kStatus.kingPos);
 
-        if (king == null) {
-            System.out.println("");
-        }
-
-        // Candidate varibles
-        ChessPiece pinned = null;
+        // Candidate variables
+        ChessPiece pinned;
         BitSet toBlock = new BitSet(64);
 
         for (int directionIndex = 0; directionIndex < 8; directionIndex++) {
@@ -278,7 +274,7 @@ public class ChessBoard implements Iterable<ChessPiece> {
     public static class KingStatus {
         // If a king is under a check, an unpinned piece can block this check
         // if a king is under a double check, no other piece can move
-        public static enum CheckState {
+        public enum CheckState {
             NONE, SINGLE, DOUBLE
         }
 
@@ -306,7 +302,7 @@ public class ChessBoard implements Iterable<ChessPiece> {
         // Pieces, that cannot move, because it will result
         // in opening the king to the check
         public BitSet pinnedPieces;
-        // Keeps track of squres, that can be occupied to block the check
+        // Keeps track of squares, that can be occupied to block the check
         // Not used in the case of double check
         public BitSet toBlockSq;
         public CheckState checkState;
@@ -322,7 +318,6 @@ public class ChessBoard implements Iterable<ChessPiece> {
     public void setPosition(String FEN) {
         chessBoard = new ChessPiece[8][8];
         chessBoardList = new LinkedList<>();
-        posHashes = new HashMap<>();
         castlingRights = new boolean[4];
 
         posHashes = new HashMap<>();
@@ -437,7 +432,7 @@ public class ChessBoard implements Iterable<ChessPiece> {
         if (data[3].equals("-")) {
             enPassant = null;
         } else {
-            enPassant = new Vector((int) (data[3].charAt(0) - 'a'), (int) (data[3].charAt(1) - '0'));
+            enPassant = new Vector(data[3].charAt(0) - 'a', data[3].charAt(1) - '0');
             if (enPassant.x > 7 || enPassant.x < 0 || enPassant.y > 7 || enPassant.y < 0) {
                 throw new IllegalArgumentException("Incorrect FEN!");
             }
@@ -488,7 +483,7 @@ public class ChessBoard implements Iterable<ChessPiece> {
                     emptyConsec++;
                 } else {
                     if (emptyConsec != 0) {
-                        retFen.append(Integer.toString(emptyConsec));
+                        retFen.append(emptyConsec);
                         emptyConsec = 0;
                     }
 
@@ -498,7 +493,7 @@ public class ChessBoard implements Iterable<ChessPiece> {
                 }
             }
             if (emptyConsec != 0) {
-                retFen.append(Integer.toString(emptyConsec));
+                retFen.append(emptyConsec);
                 emptyConsec = 0;
             }
             retFen.append('/');
@@ -529,19 +524,20 @@ public class ChessBoard implements Iterable<ChessPiece> {
         if (enPassant == null) {
             retFen.append('-');
         } else {
-            retFen.append(enPassant.toString());
+            retFen.append(enPassant);
         }
         retFen.append(' ');
 
         // Clocks
-        retFen.append(String.valueOf(halfMoveClock) + " ");
-        retFen.append(String.valueOf(fullMoveClock));
+        retFen.append(halfMoveClock);
+        retFen.append(" ");
+        retFen.append(fullMoveClock);
 
         return retFen.toString();
     }
 }
 
-// Used to check if the position has occured during the game
+// Used to check if the position has occurred during the game
 class PositionHash {
     PositionHash(List<ChessPiece> pieceList) {
         HashCodeBuilder builder = new HashCodeBuilder();
@@ -551,7 +547,7 @@ class PositionHash {
         hashCode = builder.toHashCode();
     }
 
-    private long hashCode;
+    private final long hashCode;
 
     @Override
     public int hashCode() {

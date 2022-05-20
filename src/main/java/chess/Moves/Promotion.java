@@ -12,19 +12,9 @@ public class Promotion extends Move {
     // INPUT - still waiting for user input
     public enum PromoteTo {
         INPUT, QUEEN, ROOK, BISHOP, KNIGHT
-    };
+    }
 
     public PromoteTo promoteTo;
-
-    public Promotion(ChessPiece piece, Vector from, Vector to) {
-        super(piece, from, to);
-        promoteTo = PromoteTo.INPUT;
-    }
-
-    public Promotion(ChessPiece piece, Vector from, Vector to, ChessPiece captured) {
-        super(piece, from, to, captured);
-        promoteTo = PromoteTo.INPUT;
-    }
 
     public Promotion(ChessPiece piece, Vector from, Vector to, PromoteTo promoteTo) {
         super(piece, from, to);
@@ -36,7 +26,7 @@ public class Promotion extends Move {
         this.promoteTo = promoteTo;
     }
 
-    private static HashMap<PromoteTo, Character> promToChar = new HashMap<>() {{
+    private static final HashMap<PromoteTo, Character> promToChar = new HashMap<>() {{
         put(PromoteTo.INPUT, 'q'); put(PromoteTo.QUEEN, 'q');
         put(PromoteTo.ROOK, 'r'); put(PromoteTo.BISHOP, 'b');
         put(PromoteTo.KNIGHT, 'n');  

@@ -14,29 +14,29 @@ import org.junit.Assert;
 
 public class ChessTests {
     // Data was taken from https://www.chessprogramming.org/Perft_Results
-    private static List<Long> pos1MoveCount = Arrays.asList(0L, 20L, 400L, 8902L, 197281L, 4865609L);
-    private static List<Long> pos5MoveCount = Arrays.asList(0L, 44L, 1486L, 62379L, 2103552L);
-    private static String pos1FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    private static String pos5FEN = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
+    private static final List<Long> pos1MoveCount = Arrays.asList(0L, 20L, 400L, 8902L, 197281L, 4865609L);
+    private static final List<Long> pos5MoveCount = Arrays.asList(0L, 44L, 1486L, 62379L, 2103552L);
+    private static final String pos1FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    private static final String pos5FEN = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
 
     @Test
     public void position1Test() {
         ChessBoard board = new ChessBoard(pos1FEN);
         MoveGeneration generator = new MoveGeneration(board);
 
-        Assert.assertTrue(countMoves(generator, 1) == pos1MoveCount.get(1));
+        Assert.assertEquals(countMoves(generator, 1), (long) pos1MoveCount.get(1));
         System.out.println("Pos - 1, depth - 1 -- DONE");
 
-        Assert.assertTrue(countMoves(generator, 2) == pos1MoveCount.get(2));
+        Assert.assertEquals(countMoves(generator, 2), (long) pos1MoveCount.get(2));
         System.out.println("Pos - 1, depth - 2 -- DONE");
 
-        Assert.assertTrue(countMoves(generator, 3) == pos1MoveCount.get(3));
+        Assert.assertEquals(countMoves(generator, 3), (long) pos1MoveCount.get(3));
         System.out.println("Pos - 1, depth - 3 -- DONE");
 
-        Assert.assertTrue(countMoves(generator, 4) == pos1MoveCount.get(4));
+        Assert.assertEquals(countMoves(generator, 4), (long) pos1MoveCount.get(4));
         System.out.println("Pos - 1, depth - 4 -- DONE");
 
-        Assert.assertTrue(countMoves(generator, 5) == pos1MoveCount.get(5));
+        Assert.assertEquals(countMoves(generator, 5), (long) pos1MoveCount.get(5));
         System.out.println("Pos - 1, depth - 5 -- DONE");
     }
 
@@ -45,22 +45,22 @@ public class ChessTests {
         ChessBoard board = new ChessBoard(pos5FEN);
         MoveGeneration generator = new MoveGeneration(board);
 
-        Assert.assertTrue(countMoves(generator, 1) == pos5MoveCount.get(1));
+        Assert.assertEquals(countMoves(generator, 1), (long) pos5MoveCount.get(1));
         System.out.println("Pos - 5, depth - 1 -- DONE");
 
-        Assert.assertTrue(countMoves(generator, 2) == pos5MoveCount.get(2));
+        Assert.assertEquals(countMoves(generator, 2), (long) pos5MoveCount.get(2));
         System.out.println("Pos - 5, depth - 2 -- DONE");
 
-        Assert.assertTrue(countMoves(generator, 3) == pos5MoveCount.get(3));
+        Assert.assertEquals(countMoves(generator, 3), (long) pos5MoveCount.get(3));
         System.out.println("Pos - 5, depth - 3 -- DONE");
 
-        Assert.assertTrue(countMoves(generator, 4) == pos5MoveCount.get(4));
+        Assert.assertEquals(countMoves(generator, 4), (long) pos5MoveCount.get(4));
         System.out.println("Pos - 5, depth - 4 -- DONE");
     }
 
 
 
-    private static List<String> randomFENs = Arrays.asList(
+    private static final List<String> randomFENs = Arrays.asList(
         "rn1qkb1r/p2ppppp/bp3n2/2p5/2P5/5NP1/PP1PPP1P/RNBQKB1R w KQkq - 1 5",
         "r1bqkb1r/ppp2ppp/2n2n2/3pp3/2B1P3/3P4/PPPN1PPP/R1BQK1NR w KQkq - 0 5",
         "rnbqk1nr/pp2bppp/4p3/2pp4/P7/3P1NP1/1PP1PP1P/RNBQKB1R w KQkq - 1 5",

@@ -59,7 +59,7 @@ public class App extends Application {
     }
 
     @Override
-    public void start(Stage stage) throws IOException {
+    public void start(Stage stage) throws IOException, InterruptedException {
         stage.setResizable(false);
         stage.setTitle(title);
 
@@ -85,7 +85,7 @@ public class App extends Application {
         flipTheBoard = coinFlip == 1;
 
         if (playerColor != ChessPiece.Color.WHITE) {
-            while (!stockfish.isReady()) {}
+            while (!stockfish.isReady()) { Thread.sleep(10); }
             stockfish.feedPosition();
         }
 
@@ -98,14 +98,14 @@ public class App extends Application {
         // Main loop
         new AnimationTimer() {
             public void handle(long currentTime) {
-                mainLoop(currentTime);
+                mainLoop();
             }
         }.start();
 
         stage.show();
     }
 
-    private void mainLoop(long currentTime) {
+    private void mainLoop() {
         GraphicsContext context = mainCanvas.getGraphicsContext2D();
         context.clearRect(0, 0, WIDTH, HEIGHT);
 
@@ -130,7 +130,7 @@ public class App extends Application {
             drawPieceMoves(context, selectedPiece);
     }
 
-    private EventHandler<MouseEvent> mouseHandler = new EventHandler<>() {
+    private final EventHandler<MouseEvent> mouseHandler = new EventHandler<>() {
         @Override
         public void handle(MouseEvent ev) {
             // Coord of a click on a board
@@ -175,14 +175,14 @@ public class App extends Application {
         }
     };
 
-    private EventHandler<MouseEvent> mousePosHandler = new EventHandler<>() {
+    private final EventHandler<MouseEvent> mousePosHandler = new EventHandler<>() {
         @Override
         public void handle(MouseEvent ev) {
             mousePos = new Vector((int) ev.getX(), (int) ev.getY());
         }
     };
 
-    private EventHandler<KeyEvent> keyHandler = new EventHandler<>() {
+    private final EventHandler<KeyEvent> keyHandler = new EventHandler<>() {
         @Override
         public void handle(KeyEvent ev) {
             if (ev.getEventType().equals(KeyEvent.KEY_PRESSED)) {
@@ -241,15 +241,15 @@ public class App extends Application {
     private void drawPieces(GraphicsContext context) {
         for (ChessPiece piece : board) {
             Integer index = getPieceTextureIndex(piece.getName(), piece.color());
-            Double paddingX = squareWidth * squarePadding;
-            Double paddingY = squareHeight * squarePadding;
-            // Compare by adress
+            double paddingX = squareWidth * squarePadding;
+            double paddingY = squareHeight * squarePadding;
+            // Compare by address
             if (piece == selectedPiece) {
                 // Draw dragged piece under the cursor
                 if (mouseHold) {
                     context.drawImage(
-                            piceTextures[index],
-                            mousePos.x - squareWidth / 2, mousePos.y - squareHeight / 2,
+                            pieceTextures[index],
+                            mousePos.x - (float)squareWidth / 2, mousePos.y - (float)squareHeight / 2,
                             squareWidth, squareHeight);
 
                     continue;
@@ -257,12 +257,12 @@ public class App extends Application {
             }
             if (flipTheBoard) {
                 context.drawImage(
-                        piceTextures[index],
+                        pieceTextures[index],
                         WIDTH - (piece.pos().x + 1) * squareWidth + paddingX, piece.pos().y * squareHeight + paddingY,
                         squareWidth - paddingX * 2, squareHeight - paddingY * 2);
             } else {
                 context.drawImage(
-                        piceTextures[index],
+                        pieceTextures[index],
                         piece.pos().x * squareWidth + paddingX, HEIGHT - (piece.pos().y + 1) * squareHeight + paddingY,
                         squareWidth - paddingX * 2, squareHeight - paddingY * 2);
             }
@@ -271,8 +271,8 @@ public class App extends Application {
 
     private void drawPieceMoves(GraphicsContext context, ChessPiece piece) {
         context.setStroke(Color.rgb(255, 255, 255, 0.8));
-        final double radX = squareWidth / 3;
-        final double radY = squareHeight / 3;
+        final double radX = (double)squareWidth / 3;
+        final double radY = (double)squareHeight / 3;
 
         for (Move move : moveGenerator.getPieceMoves(piece)) {
             context.setLineWidth(5);
@@ -333,7 +333,7 @@ public class App extends Application {
         Move, Capture,
         Castles, Check,
         GameOver
-    };
+    }
 
     private void playSound(Sound sound, chess.Logic.ChessPiece.Color color) {
         int ordinal = sound.ordinal();
@@ -351,7 +351,7 @@ public class App extends Application {
         player.play();
     }
 
-    private void loadIcon(Stage stage) throws IOException {
+    private void loadIcon(Stage stage) {
         String iconPath = currentPath + resourcePath + "\\icon.png";
         if (!(new File(iconPath).exists()))
             return;
@@ -360,14 +360,14 @@ public class App extends Application {
         stage.getIcons().add(icon);
     }
 
-    private List<String> textureFilenames = Arrays.asList(
+    private final List<String> textureFilenames = Arrays.asList(
             "wK.svg", "wQ.svg", "wR.svg",
             "wN.svg", "wB.svg", "wP.svg",
             "bK.svg", "bQ.svg", "bR.svg",
             "bN.svg", "bB.svg", "bP.svg");
 
     private void loadPieceTextures() {
-        piceTextures = new Image[12];
+        pieceTextures = new Image[12];
 
         String texturePath = currentPath + resourcePath + "\\Chess Pieces\\";
 
@@ -386,12 +386,12 @@ public class App extends Application {
                 // To make compiler happy)
                 return;
             }
-            piceTextures[i] = SwingFXUtils.toFXImage(bImg, null);
+            pieceTextures[i] = SwingFXUtils.toFXImage(bImg, null);
         }
     }
 
     private Media[] sounds;
-    private List<String> soundFilenames = Arrays.asList(
+    private final List<String> soundFilenames = Arrays.asList(
             "Move-W.wav", "Move-B.wav",
             "Capture-W.wav", "Capture-B.wav",
             "Castles-W.wav", "Castles-B.wav",
@@ -415,19 +415,19 @@ public class App extends Application {
 
     private Vector screenToBoardCoord(Vector screenCoord) {
         if (flipTheBoard) {
-            return new Vector((int) ((WIDTH - screenCoord.x) / squareWidth),
-                    (int) (screenCoord.y / squareWidth));
+            return new Vector((WIDTH - screenCoord.x) / squareWidth,
+                    screenCoord.y / squareWidth);
         } else {
-            return new Vector((int) (screenCoord.x / squareWidth),
-                    (int) ((HEIGHT - screenCoord.y) / squareWidth));
+            return new Vector(screenCoord.x / squareWidth,
+                    (HEIGHT - screenCoord.y) / squareWidth);
         }
     }
 
     private Integer getPieceTextureIndex(ChessPiece.Name name, ChessPiece.Color color) {
-        return name.ordinal() + (color == ChessPiece.Color.BLACK ? (piceTextures.length / 2) : 0);
+        return name.ordinal() + (color == ChessPiece.Color.BLACK ? (pieceTextures.length / 2) : 0);
     }
 
-    private Image[] piceTextures;
+    private Image[] pieceTextures;
 
     private ChessBoard board;
     private MoveGeneration moveGenerator;

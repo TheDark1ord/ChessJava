@@ -30,8 +30,8 @@ public abstract class ChessPiece {
     public List<Move> possibleMoves;
     public BitSet attackedSquares;
 
-    // If a piece is relativly pinned(it can move along the direction of a pin)
-    // It is a list it case of a double pin
+    // If a piece is relatively pinned(it can move along the direction of a pin)
+    // It is a list in case of a double pin
     public List<Vector> pinnedDirection;
 
     ChessPiece(Vector pos, Color color, ChessBoard parentBoard) {
@@ -50,10 +50,6 @@ public abstract class ChessPiece {
         return pos;
     }
 
-    public void setPos(Vector newPos) {
-        pos = newPos;
-    }
-
     // Generates all the possible pseudo-legal moves the piece can make with current
     // board position and lists them in the possibleMoves list
     // also lists protected pieces
@@ -63,11 +59,10 @@ public abstract class ChessPiece {
         KING, QUEEN,
         ROOK, KNIGHT,
         BISHOP, PAWN,
-    };
+    }
 
     abstract public Name getName();
 
-    abstract public boolean isSlidingPiece();
 
     // Checks parent board and
     // Returns 1 if square is occupied by a friendly piece
@@ -84,12 +79,8 @@ public abstract class ChessPiece {
         attackedSquares.set(movePos.y * 8 + movePos.x);
     }
 
-    protected void setAttacked(int x, int y) {
-        attackedSquares.set(y * 8 + x);
-    }
-
     static Vector[] directionOffsets = new Vector[] {
-            // Straing paths
+            // Straight paths
             new Vector(1, 0), new Vector(-1, 0),
             new Vector(0, 1), new Vector(0, -1),
             // Diagonal paths
@@ -257,11 +248,6 @@ class King extends ChessPiece {
     }
 
     @Override
-    public boolean isSlidingPiece() {
-        return false;
-    }
-
-    @Override
     public Name getName() {
         return Name.KING;
     }
@@ -278,11 +264,6 @@ class Queen extends ChessPiece {
         possibleMoves = new LinkedList<>();
 
         possibleMoves = generateSlidingMoves();
-    }
-
-    @Override
-    public boolean isSlidingPiece() {
-        return true;
     }
 
     @Override
@@ -305,11 +286,6 @@ class Rook extends ChessPiece {
     }
 
     @Override
-    public boolean isSlidingPiece() {
-        return true;
-    }
-
-    @Override
     public Name getName() {
         return Name.ROOK;
     }
@@ -326,11 +302,6 @@ class Bishop extends ChessPiece {
         possibleMoves = new LinkedList<>();
 
         possibleMoves = generateSlidingMoves();
-    }
-
-    @Override
-    public boolean isSlidingPiece() {
-        return true;
     }
 
     @Override
@@ -372,11 +343,6 @@ class Knight extends ChessPiece {
                 }
             }
         }
-    }
-
-    @Override
-    public boolean isSlidingPiece() {
-        return false;
     }
 
     @Override
@@ -498,11 +464,6 @@ class Pawn extends ChessPiece {
                 }
             }
         }
-    }
-
-    @Override
-    public boolean isSlidingPiece() {
-        return false;
     }
 
     @Override

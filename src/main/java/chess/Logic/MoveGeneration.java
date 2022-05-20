@@ -40,7 +40,7 @@ public class MoveGeneration {
                 chessBoard.enPassant = null;
 
                 chessBoard.incrementClocks();
-                calculatePossition();
+                calculatePosition();
                 endGame();
 
                 return true;
@@ -52,7 +52,7 @@ public class MoveGeneration {
                 chessBoard.enPassant = null;
 
                 chessBoard.incrementClocks();
-                calculatePossition();
+                calculatePosition();
                 endGame();
 
                 return true;
@@ -95,7 +95,7 @@ public class MoveGeneration {
         chessBoard.movePiece(move);
         chessBoard.incrementClocks();
 
-        calculatePossition();
+        calculatePosition();
         endGame();
 
         return true;
@@ -123,7 +123,7 @@ public class MoveGeneration {
                 chessBoard.chessBoardList.add(prom.captured);
             }
 
-            calculatePossition();
+            calculatePosition();
             return;
         } else if (toUndo instanceof Castling) {
             Castling cstl = (Castling) toUndo;
@@ -155,23 +155,23 @@ public class MoveGeneration {
             chessBoard.chessBoardList.add(toUndo.captured);
         }
 
-        calculatePossition();
+        calculatePosition();
     }
 
     public List<Move> getPieceMoves(ChessPiece piece) {
         if (chessBoard.gameResult != ChessBoard.GameResult.NONE) {
-            return new LinkedList<Move>();
+            return new LinkedList<>();
         }
 
         // Null and color
         ChessPiece.Color currentColor = chessBoard.getCurrentColor();
         if (piece == null || piece.color != currentColor)
-            return new LinkedList<Move>();
+            return new LinkedList<>();
 
         // Check and pin
         KingStatus kSt = chessBoard.getStatus(chessBoard.whiteToMove());
         if (kSt.checkState == KingStatus.CheckState.DOUBLE)
-            return new LinkedList<Move>();
+            return new LinkedList<>();
 
         return getLegalMoves(piece, kSt);
     }
@@ -185,7 +185,7 @@ public class MoveGeneration {
     }
 
     // Calculate moves and update KingStatus
-    void calculatePossition() {
+    void calculatePosition() {
         chessBoard.WKingSt.resetStatus();
         chessBoard.BKingSt.resetStatus();
 
@@ -309,7 +309,7 @@ public class MoveGeneration {
         }
     }
 
-    // Chech if the game should conclude
+    // Check if the game should conclude
     private void endGame() {
         KingStatus kSt = chessBoard.getStatus(chessBoard.whiteToMove());
 
